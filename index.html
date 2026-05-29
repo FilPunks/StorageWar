@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Storage War — A FilPunks Survival Game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #050510;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      font-family: monospace;
+    }
+
+    #game-container {
+      position: relative;
+      width: 1024px;
+      height: 768px;
+    }
+
+    #game-canvas {
+      display: block;
+      border: 2px solid #1a1a3a;
+      image-rendering: auto;
+    }
+
+    /* 升级弹窗浮层 */
+    #upgrade-overlay {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    #upgrade-overlay.active {
+      display: flex;
+    }
+
+    #upgrade-title {
+      color: #ffd700;
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 30px;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+
+    #upgrade-choices {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .upgrade-card {
+      width: 240px;
+      padding: 20px 16px;
+      background: #1a1a3a;
+      border: 2px solid #3a3a6a;
+      border-radius: 10px;
+      color: #dfe6e9;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .upgrade-card:hover {
+      transform: translateY(-4px);
+      border-color: #ffd700;
+      box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+    }
+
+    .upgrade-card .name {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .upgrade-card .desc {
+      font-size: 13px;
+      color: #a0a0b0;
+      margin-bottom: 10px;
+    }
+
+    .upgrade-card .card-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .upgrade-card .evolve {
+      font-size: 12px;
+      color: #ffd700;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .upgrade-card .evolve small {
+      color: #a09060;
+    }
+
+    .new-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #ff6348;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-bottom: 4px;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .lv-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #636e72;
+      color: #dfe6e9;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .upgrade-card .level {
+      font-size: 12px;
+      color: #6c5ce7;
+    }
+
+    .upgrade-card .rarity-common { color: #dfe6e9; }
+    .upgrade-card .rarity-rare { color: #74b9ff; }
+    .upgrade-card .rarity-epic { color: #a29bfe; }
+    .upgrade-card .rarity-legendary { color: #ffd700; }
+
+    /* 语言切换按钮 */
+    #lang-toggle {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      height: 28px;
+      padding: 3px 8px;
+      background: #2080f0;
+      color: #fff;
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: bold;
+      text-align: center;
+      border: 2px solid #1050a0;
+      border-bottom: 4px solid #1050a0;
+      cursor: pointer;
+      image-rendering: pixelated;
+      letter-spacing: 1px;
+      text-shadow: 1px 1px 0 #1050a0;
+      user-select: none;
+      transition: transform 0.1s;
+      box-sizing: content-box;
+    }
+    #lang-toggle:hover {
+      background: #3090ff;
+      transform: scale(1.05);
+    }
+    #lang-toggle:active {
+      transform: translateY(2px);
+      border-bottom-width: 2px;
+    }
+    #sound-toggle {
+      position: absolute;
+      top: 16px;
+      right: 90px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      height: 28px;
+      padding: 3px 8px;
+      background: #2080f0;
+      color: #fff;
+      font-family: monospace;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      border: 2px solid #1050a0;
+      border-bottom: 4px solid #1050a0;
+      cursor: pointer;
+      image-rendering: pixelated;
+      letter-spacing: 1px;
+      text-shadow: 1px 1px 0 #1050a0;
+      user-select: none;
+      transition: transform 0.1s;
+      box-sizing: content-box;
+    }
+    #sound-toggle:hover {
+      background: #3090ff;
+      transform: scale(1.05);
+    }
+    #sound-toggle:active {
+      transform: translateY(2px);
+      border-bottom-width: 2px;
+    }
+    #sound-toggle.muted {
+      background: #555;
+      border-color: #333;
+      border-bottom-color: #333;
+      text-shadow: 1px 1px 0 #333;
+    }
+    #donate-area {
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      text-align: center;
+      white-space: nowrap;
+    }
+    #donate-text {
+      color: #555;
+      font-family: monospace;
+      font-size: 11px;
+    }
+    #copy-btn {
+      display: inline;
+      padding: 0 4px;
+      background: none;
+      color: #888;
+      font-family: monospace;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+      user-select: none;
+      vertical-align: baseline;
+    }
+    #copy-btn:hover {
+      color: #2080f0;
+    }
+    #copy-btn.copied {
+      color: #27ae60;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+    <div id="lang-toggle">中/EN</div>
+    <div id="sound-toggle">♪</div>
+    <div id="donate-area">
+      <span id="donate-text"></span><button id="copy-btn">⎘</button>
+    </div>
+    <div id="upgrade-overlay">
+      <div id="upgrade-title">⭐ 升级！选择一个技能 ⭐</div>
+      <div id="upgrade-choices"></div>
+    </div>
+  </div>
+
+  <!-- 游戏模块，按依赖顺序加载 -->
+  <script type="module" src="js/main.js?v=12"></script>
+</body>
+</html>
