@@ -73,8 +73,4 @@ Or play on [GitHub Pages](https://github.com/your-username/your-repo).
 
 ## Credits
 
-Built with [Claude Code](https://claude.ai/code) and [Proma Agent](https://proma.ai).
-
-## License
-
-MIT
+Built with [DeepSeek V4](https://deepseek.com).
