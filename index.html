@@ -4,6 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Storage War — A FilPunks Survival Game</title>
+  <link rel="icon" type="image/png" href="205.png">
+  <script>
+    // 将 favicon 裁剪为圆形
+    const img = new Image();
+    img.onload = () => {
+      const size = 64;
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const ctx = c.getContext('2d');
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(img, 0, 0, size, size);
+      const link = document.querySelector('link[rel="icon"]');
+      link.href = c.toDataURL('image/png');
+    };
+    img.src = '205.png';
+  </script>
   <style>
     * {
       margin: 0;
