@@ -51,6 +51,88 @@
       image-rendering: auto;
     }
 
+    /* 移动端提示页 */
+    #mobile-notice {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #050510;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #mobile-notice .notice-icon {
+      width: 96px;
+      height: 96px;
+      image-rendering: pixelated;
+      margin-bottom: 24px;
+      border-radius: 50%;
+      border: 3px solid #2080f0;
+    }
+
+    #mobile-notice .notice-title {
+      color: #2080f0;
+      font-family: monospace;
+      font-size: clamp(28px, 6vw, 56px);
+      font-weight: bold;
+      text-shadow: 3px 3px 0 #081830, 6px 6px 0 #041020;
+      margin-bottom: 4px;
+      letter-spacing: 2px;
+    }
+
+    #mobile-notice .notice-subtitle {
+      color: #6a9fd8;
+      font-family: monospace;
+      font-size: clamp(13px, 2.5vw, 18px);
+      margin-bottom: 32px;
+    }
+
+    #mobile-notice .notice-message {
+      color: #dfe6e9;
+      font-family: monospace;
+      font-size: clamp(15px, 3vw, 20px);
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    #mobile-notice .notice-hint {
+      color: #888;
+      font-family: monospace;
+      font-size: clamp(11px, 2vw, 14px);
+    }
+
+    /* 移动端时显示提示，隐藏游戏 */
+    body.is-mobile #game-container {
+      width: 100%;
+      height: 100%;
+      max-width: 100vw;
+      max-height: 100vh;
+    }
+
+    body.is-mobile #game-canvas,
+    body.is-mobile #lang-toggle,
+    body.is-mobile #sound-toggle,
+    body.is-mobile #donate-area,
+    body.is-mobile #upgrade-overlay {
+      display: none !important;
+    }
+
+    body.is-mobile #mobile-notice {
+      display: flex;
+    }
+
+    body.is-mobile #game-container {
+      width: 100vw;
+      height: 100vh;
+    }
+
     /* 升级弹窗浮层 */
     #upgrade-overlay {
       display: none;
@@ -283,6 +365,13 @@
 <body>
   <div id="game-container">
     <canvas id="game-canvas"></canvas>
+    <div id="mobile-notice">
+      <img class="notice-icon" src="205.png" alt="logo" />
+      <div class="notice-title">STORAGE WAR</div>
+      <div class="notice-subtitle">A FilPunks Survival Game</div>
+      <div class="notice-message">请使用电脑浏览器打开此页面</div>
+      <div class="notice-hint">本游戏需要键盘和鼠标操作，不支持移动端</div>
+    </div>
     <div id="lang-toggle">中/EN</div>
     <div id="sound-toggle">♪</div>
     <div id="donate-area">
@@ -293,6 +382,31 @@
       <div id="upgrade-choices"></div>
     </div>
   </div>
+
+  <!-- 移动端检测 -->
+  <script>
+    (function() {
+      var ua = navigator.userAgent || '';
+      var isMobileUA = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini|Windows Phone/i.test(ua);
+      var isSmallScreen = window.innerWidth < 1024 || window.innerHeight < 600;
+      var isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      if (isMobileUA || (isSmallScreen && isTouch)) {
+        document.body.classList.add('is-mobile');
+        window.__IS_MOBILE = true;
+
+        // 根据保存的语言偏好更新提示文字
+        var lang = (localStorage.getItem('storageWar_lang') || 'zh') === 'en' ? 'en' : 'zh';
+        var msg = document.querySelector('.notice-message');
+        var hint = document.querySelector('.notice-hint');
+        if (msg) msg.textContent = lang === 'en'
+          ? 'Please open this page on a desktop browser'
+          : '请使用电脑浏览器打开此页面';
+        if (hint) hint.textContent = lang === 'en'
+          ? 'This game requires keyboard & mouse, mobile is not supported'
+          : '本游戏需要键盘和鼠标操作，不支持移动端';
+      }
+    })();
+  </script>
 
   <!-- 游戏模块，按依赖顺序加载 -->
   <script type="module" src="js/main.js?v=12"></script>

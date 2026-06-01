@@ -677,5 +677,7 @@ class Game {
   }
 }
 
-const game = new Game();
-game.start();
+if (!window.__IS_MOBILE) {
+  const game = new Game();
+  game.start();
+}

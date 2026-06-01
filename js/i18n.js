@@ -106,7 +106,7 @@ const dict = {
 
   // --- 被动技能 ---
   'skill.raidRedundancy.name':     { zh: 'RAID 冗余',           en: 'RAID Redundancy' },
-  'skill.raidRedundancy.desc':     { zh: '最大 HP +25，每秒回复 0.5 HP', en: 'Max HP +25, regen 0.5 HP/s' },
+  'skill.raidRedundancy.desc':     { zh: '最大 HP +25，每秒回复 2 HP', en: 'Max HP +25, regen 2 HP/s' },
   'skill.raidRedundancy.lv5Bonus': { zh: 'HP<30% 时回复翻倍',    en: 'Doubled regen when HP<30%' },
 
   'skill.eccMemory.name':     { zh: 'ECC 内存',                  en: 'ECC Memory' },
@@ -132,6 +132,12 @@ const dict = {
   'skill.firewallRules.name':     { zh: '防火墙规则',              en: 'Firewall Rules' },
   'skill.firewallRules.desc':     { zh: '受到伤害 -10%',           en: 'Damage taken -10%' },
   'skill.firewallRules.lv5Bonus': { zh: '无敌帧时间 +0.2s',        en: 'Invincibility frames +0.2s' },
+
+  // --- 移动端提示 ---
+  'mobile.title':        { zh: 'STORAGE WAR',                         en: 'STORAGE WAR' },
+  'mobile.subtitle':     { zh: 'A FilPunks Survival Game',            en: 'A FilPunks Survival Game' },
+  'mobile.message':      { zh: '请使用电脑浏览器打开此页面',            en: 'Please open this page on a desktop browser' },
+  'mobile.hint':         { zh: '本游戏需要键盘和鼠标操作，不支持移动端',  en: 'This game requires keyboard & mouse, mobile is not supported' },
 };
 
 // ============================================================

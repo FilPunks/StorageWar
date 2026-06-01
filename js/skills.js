@@ -126,13 +126,13 @@ const PASSIVE_SKILLS = [
     name: 'RAID Redundancy',
     emoji: '💾',
     type: 'passive',
-    description: '最大 HP +25，每秒回复 0.5 HP',
+    description: '最大 HP +25，每秒回复 2 HP',
     maxLevel: 5,
     lv5Bonus: 'HP<30% 时回复翻倍',
     apply(player, level) {
       player.maxHp += 25;
       player.heal(25);
-      player.hpRegen += 0.5;
+      player.hpRegen += 2;
       if (level >= 5) player.skillState.raid5 = true;
     },
   },
