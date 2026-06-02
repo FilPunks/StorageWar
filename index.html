@@ -379,9 +379,26 @@
       <img class="notice-icon" src="205.png" alt="logo" />
       <div class="notice-title">STORAGE WAR</div>
       <div class="notice-subtitle">A FilPunks Survival Game</div>
-      <div class="notice-message">请使用电脑浏览器打开此页面</div>
-      <div class="notice-hint">本游戏需要键盘和鼠标操作，不支持移动端</div>
+      <div class="notice-message"></div>
+      <div class="notice-hint"></div>
     </div>
+
+    <!-- 立即根据浏览器语言设置移动端提示文字，避免闪烁 -->
+    <script>
+      (function() {
+        var navLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+        var storedLang = localStorage.getItem('storageWar_lang');
+        var lang = storedLang || (navLang.startsWith('zh') ? 'zh' : 'en');
+        var msg = document.querySelector('.notice-message');
+        var hint = document.querySelector('.notice-hint');
+        if (msg) msg.textContent = lang === 'en'
+          ? 'Please open this page on a desktop browser'
+          : '请使用电脑浏览器打开此页面';
+        if (hint) hint.textContent = lang === 'en'
+          ? 'This game requires keyboard & mouse, mobile is not supported'
+          : '本游戏需要键盘和鼠标操作，不支持移动端';
+      })();
+    </script>
     <div id="lang-toggle">中/EN</div>
     <div id="sound-toggle">♪</div>
     <div id="donate-area">
@@ -403,19 +420,6 @@
       if (isMobileUA || (isSmallScreen && isTouch)) {
         document.body.classList.add('is-mobile');
         window.__IS_MOBILE = true;
-
-        // 根据浏览器语言更新提示文字
-        var navLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
-        var storedLang = localStorage.getItem('storageWar_lang');
-        var lang = storedLang || (navLang.startsWith('zh') ? 'zh' : 'en');
-        var msg = document.querySelector('.notice-message');
-        var hint = document.querySelector('.notice-hint');
-        if (msg) msg.textContent = lang === 'en'
-          ? 'Please open this page on a desktop browser'
-          : '请使用电脑浏览器打开此页面';
-        if (hint) hint.textContent = lang === 'en'
-          ? 'This game requires keyboard & mouse, mobile is not supported'
-          : '本游戏需要键盘和鼠标操作，不支持移动端';
       }
     })();
   </script>
