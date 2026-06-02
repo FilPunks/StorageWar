@@ -1,7 +1,15 @@
 // Storage War — i18n 中英文切换模块
 
 const STORAGE_KEY = 'storageWar_lang';
-let currentLang = localStorage.getItem(STORAGE_KEY) || 'zh';
+
+function detectLanguage() {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) return stored;
+  const navLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+  return navLang.startsWith('zh') ? 'zh' : 'en';
+}
+
+let currentLang = detectLanguage();
 const listeners = [];
 
 // ============================================================

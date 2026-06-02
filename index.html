@@ -404,8 +404,10 @@
         document.body.classList.add('is-mobile');
         window.__IS_MOBILE = true;
 
-        // 根据保存的语言偏好更新提示文字
-        var lang = (localStorage.getItem('storageWar_lang') || 'zh') === 'en' ? 'en' : 'zh';
+        // 根据浏览器语言更新提示文字
+        var navLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+        var storedLang = localStorage.getItem('storageWar_lang');
+        var lang = storedLang || (navLang.startsWith('zh') ? 'zh' : 'en');
         var msg = document.querySelector('.notice-message');
         var hint = document.querySelector('.notice-hint');
         if (msg) msg.textContent = lang === 'en'
