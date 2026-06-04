@@ -174,9 +174,9 @@ export const XP = {
 // --- 敌人生成器 ---
 export const SPAWNER = {
   initialInterval: 0.75,  // 初始生成间隔(秒)
-  minInterval: 0.07,      // 最小生成间隔 — 最高~14只/秒
-  intervalDecay: 0.0025,  // 每秒减少的间隔 — 约2.3分钟达到峰值
-  maxEnemies: 400,        // 场上最大敌人数
+  minInterval: 0.1,       // 最小生成间隔
+  intervalDecay: 0.0023,  // 每秒减少的间隔
+  maxEnemies: 350,        // 场上最大敌人数
   spawnMargin: 60,        // 屏幕外生成距离
 };
 
@@ -187,8 +187,8 @@ export const PARTICLES = {
 
 // --- 颜色主题 ---
 export const COLORS = {
-  background: '#0a0a1a',
-  grid: '#141430',
+  background: '#060612',
+  grid: '#28285c',
   player: '#6c5ce7',
   playerOutline: '#a29bfe',
   projectile: '#74b9ff',

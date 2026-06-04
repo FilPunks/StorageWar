@@ -1,7 +1,7 @@
 // Storage War — 主入口 & 游戏循环 v2（武器系统集成）
 
 import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, SPAWNER, ENEMY_TYPES } from './constants.js';
-import { initInput, getMovementVector, isKeyPressed } from './input.js';
+import { initInput, getMovementVector, isKeyPressed, isKeyJustPressed } from './input.js';
 import { Player, XpCoin, Enemy } from './entities.js';
 import {
   drawBackground, drawPlayer, drawEnemies, drawProjectiles,
@@ -24,7 +24,7 @@ import { initAudio, isMuted, toggleMute,
   playBossWarning, playPlayerDamage, playPingPulse,
 } from './audio.js';
 
-const STATE = { MENU: 'menu', PLAYING: 'playing', UPGRADING: 'upgrading', GAMEOVER: 'gameover' };
+const STATE = { MENU: 'menu', PLAYING: 'playing', UPGRADING: 'upgrading', PAUSED: 'paused', GAMEOVER: 'gameover' };
 
 class Game {
   constructor() {
@@ -48,6 +48,7 @@ class Game {
     this.particles = [];
 
     this.running = false;
+    this.paused = false;
     this.upgradeUI = new UpgradeUI();
 
     // 语言切换按钮
@@ -160,10 +161,24 @@ class Game {
   }
 
   update(dt) {
+    // P 键暂停/继续
+    if (isKeyJustPressed('p') && (this.state === STATE.PLAYING || this.state === STATE.UPGRADING || this.state === STATE.PAUSED)) {
+      if (this.state === STATE.PAUSED) {
+        this.state = this._prePauseState || STATE.PLAYING;
+        this.paused = false;
+      } else {
+        this._prePauseState = this.state;
+        this.state = STATE.PAUSED;
+        this.paused = true;
+      }
+      return;
+    }
+
     switch (this.state) {
       case STATE.MENU: this.updateMenu(dt); break;
       case STATE.PLAYING: this.updatePlaying(dt); break;
       case STATE.UPGRADING: break;
+      case STATE.PAUSED: break;
       case STATE.GAMEOVER: this.updateGameOver(dt); break;
     }
   }
@@ -569,6 +584,7 @@ class Game {
     screenFX.shakeDuration = 0;
     screenFX.flashAlpha = 0;
     screenFX.flashDuration = 0;
+    this.paused = false;
     this.state = STATE.PLAYING;
   }
 
@@ -586,7 +602,11 @@ class Game {
     switch (this.state) {
       case STATE.MENU: this.renderMenu(); break;
       case STATE.PLAYING:
-      case STATE.UPGRADING: this.renderPlaying(); break;
+      case STATE.UPGRADING:
+      case STATE.PAUSED:
+        this.renderPlaying();
+        if (this.state === STATE.PAUSED) this.renderPause();
+        break;
       case STATE.GAMEOVER:
         this.renderPlaying();
         this.renderGameOver();
@@ -636,6 +656,20 @@ class Game {
     ctx.restore();
 
     drawHUD(ctx, this.gameTime, this.kills, this.player, this.enemies, this._bossWarnings);
+  }
+
+  renderPause() {
+    const { ctx, canvas } = this;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+    this._drawRetroText(ctx, 'PAUSED', cx, cy, 'bold 52px monospace',
+      '#dfe6e9', '#1a1a3a', 4, 3, 3);
+    ctx.fillStyle = '#888';
+    ctx.font = '16px monospace';
+    ctx.fillText(t('pause.hint'), cx, cy + 50);
   }
 
   renderGameOver() {

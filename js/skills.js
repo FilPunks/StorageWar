@@ -258,7 +258,7 @@ export function applySkill(player, skill) {
   if (skill.type === 'active') {
     let entry = player.activeWeapons.get(skill.id);
     if (!entry) {
-      entry = { level: 0, cooldownTimer: 0, evolved: false };
+      entry = { level: 0, cooldownTimer: 0, evolved: false, emoji: skill.emoji };
       player.activeWeapons.set(skill.id, entry);
     }
     entry.level = newLv;
@@ -273,7 +273,7 @@ export function applySkill(player, skill) {
   if (skill.type === 'passive') {
     let entry = player.passiveSkills.get(skill.id);
     if (!entry) {
-      entry = { level: 0 };
+      entry = { level: 0, emoji: skill.emoji };
       player.passiveSkills.set(skill.id, entry);
     }
     entry.level = newLv;

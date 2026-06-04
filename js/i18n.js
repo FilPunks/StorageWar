@@ -141,6 +141,9 @@ const dict = {
   'skill.firewallRules.desc':     { zh: '受到伤害 -10%',           en: 'Damage taken -10%' },
   'skill.firewallRules.lv5Bonus': { zh: '无敌帧时间 +0.2s',        en: 'Invincibility frames +0.2s' },
 
+  // --- 暂停 ---
+  'pause.hint':          { zh: '按 P 继续',                           en: 'Press P to Resume' },
+
   // --- 移动端提示 ---
   'mobile.title':        { zh: 'STORAGE WAR',                         en: 'STORAGE WAR' },
   'mobile.subtitle':     { zh: 'A FilPunks Survival Game',            en: 'A FilPunks Survival Game' },

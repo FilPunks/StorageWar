@@ -3,6 +3,9 @@
 import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS } from './constants.js';
 import { t } from './i18n.js';
 
+const ACTIVE_COLOR = '#74b9ff';
+const PASSIVE_COLOR = '#55efc4';
+
 // ========== 玩家精灵图加载 ==========
 
 const playerSprite = new Image();
@@ -1688,11 +1691,68 @@ export function drawHUD(ctx, gameTime, kills, player, enemies, bossWarnings) {
   ctx.font = '10px monospace';
   ctx.fillText(`${player.xp} / ${player.xpToNext}`, barX + barWidth / 2 - 20, xpBarY + 1);
 
-  // --- 右下：等级（与 XP 条同行，右侧） ---
+  // --- 右下：技能 emoji + 等级（与左侧 HUD 中位线对齐） ---
   ctx.textAlign = 'right';
-  ctx.fillStyle = '#ffd700';
+  ctx.textBaseline = 'middle';
+
+  // 左侧 HUD 中位线：HP 条顶 到 XP 条底 的中点
+  const leftHudCenterY = (barY + xpBarY + barHeight) / 2;
+
+  // 收集已习得技能（按习得顺序，先习得的靠右靠近等级）
+  const skillEntries = [];
+  if (player.activeWeapons) {
+    for (const [, entry] of player.activeWeapons) {
+      if (entry.emoji) skillEntries.push({ ...entry, type: 'active' });
+    }
+  }
+  if (player.passiveSkills) {
+    for (const [, entry] of player.passiveSkills) {
+      if (entry.emoji) skillEntries.push({ ...entry, type: 'passive' });
+    }
+  }
+
+  const boxSize = 24;
+  const gap = 4;
+  const levelText = `${t('hud.lv')} ${player.level}`;
   ctx.font = 'bold 22px monospace';
-  ctx.fillText(`${t('hud.lv')} ${player.level}`, CANVAS_WIDTH - pad, xpBarY + 1);
+  const levelWidth = ctx.measureText(levelText).width;
+
+  // 从右向左：先画等级，再画 emoji 框
+  let curX = CANVAS_WIDTH - pad;
+  ctx.fillStyle = '#ffd700';
+  ctx.fillText(levelText, curX, leftHudCenterY + 2);
+  curX -= levelWidth + 20;
+
+  // 倒序：先习得的靠右（靠近等级），后习得的靠左
+  for (let i = skillEntries.length - 1; i >= 0; i--) {
+    const entry = skillEntries[i];
+    const borderColor = entry.type === 'active' ? ACTIVE_COLOR : PASSIVE_COLOR;
+    const boxX = curX - boxSize;
+    const boxY = leftHudCenterY - boxSize / 2;
+
+    // 背景
+    ctx.fillStyle = '#0a0a1e';
+    ctx.fillRect(boxX, boxY, boxSize, boxSize);
+    // 边框
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(boxX, boxY, boxSize, boxSize);
+
+    // emoji 居中
+    ctx.fillStyle = '#fff';
+    ctx.font = '13px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(entry.emoji, boxX + boxSize / 2, boxY + boxSize / 2 - 1);
+
+    // 右下角等级数字
+    ctx.font = 'bold 9px monospace';
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'right';
+    ctx.fillText(entry.level, boxX + boxSize - 2, boxY + boxSize - 4);
+
+    curX = boxX - gap;
+  }
+  ctx.textBaseline = 'top';
 
   // --- Boss HP 条（顶部居中） ---
   if (enemies && enemies.length > 0) {

@@ -370,6 +370,16 @@
     #copy-btn.copied {
       color: #27ae60;
     }
+    #version-label {
+      position: absolute;
+      bottom: 2px;
+      right: 6px;
+      z-index: 20;
+      color: #555;
+      font-family: monospace;
+      font-size: 11px;
+      user-select: none;
+    }
   </style>
 </head>
 <body>
@@ -404,6 +414,7 @@
     <div id="donate-area">
       <span id="donate-text"></span><button id="copy-btn">⎘</button>
     </div>
+    <div id="version-label">version 0.2</div>
     <div id="upgrade-overlay">
       <div id="upgrade-title">⭐ 升级！选择一个技能 ⭐</div>
       <div id="upgrade-choices"></div>

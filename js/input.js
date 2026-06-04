@@ -55,9 +55,23 @@ export function getMovementVector() {
   return { x: dx, y: dy };
 }
 
+const justPressedKeys = {};
+
 /** 检查按键是否被按下 */
 export function isKeyPressed(key) {
   return !!keys[key];
+}
+
+/** 检查按键是否在当前帧刚被按下（仅触发一次，直到松开再按） */
+export function isKeyJustPressed(key) {
+  if (keys[key] && !justPressedKeys[key]) {
+    justPressedKeys[key] = true;
+    return true;
+  }
+  if (!keys[key]) {
+    justPressedKeys[key] = false;
+  }
+  return false;
 }
 
 /** 暂停/恢复输入处理 */
