@@ -411,3 +411,43 @@ export function playGpuVolley() {
     osc.stop(t + 0.1);
   }
 }
+
+// ---- Kernel Panic 音效 ----
+
+export function playKernelCrash() {
+  const c = ctx();
+  const now = c.currentTime;
+  // 系统崩溃音效：蓝屏错误蜂鸣 + 故障噪音
+  const osc = c.createOscillator();
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(1000, now);
+  osc.frequency.setValueAtTime(800, now + 0.08);
+  osc.frequency.setValueAtTime(400, now + 0.2);
+  osc.frequency.exponentialRampToValueAtTime(80, now + 0.5);
+  const lfo = c.createOscillator();
+  lfo.frequency.value = 40;
+  const lfoGain = c.createGain();
+  lfoGain.gain.value = 100;
+  lfo.connect(lfoGain);
+  lfoGain.connect(osc.frequency);
+  const g = gainEnv(c, 0.01, 0.5, 0.15, now);
+  // 故障噪声
+  const noise = noiseNode(c, 0.3);
+  const filter = c.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(2000, now);
+  filter.frequency.exponentialRampToValueAtTime(400, now + 0.25);
+  filter.Q.value = 0.3;
+  const ng = gainEnv(c, 0.005, 0.28, 0.1, now);
+  osc.connect(g);
+  noise.connect(filter);
+  filter.connect(ng);
+  g.connect(out());
+  ng.connect(out());
+  lfo.start(now);
+  osc.start(now);
+  noise.start(now);
+  lfo.stop(now + 0.55);
+  osc.stop(now + 0.55);
+  noise.stop(now + 0.35);
+}

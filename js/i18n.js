@@ -69,6 +69,8 @@ const dict = {
   'enemy.cpu':           { zh: '超频 CPU',            en: 'Overclocked CPU' },
   'enemy.rootkit':       { zh: '勒索软件',            en: 'Ransomware Rootkit' },
   'enemy.gpu':           { zh: 'NVIDIA RTX 9090',    en: 'NVIDIA RTX 9090' },
+  'enemy.kernelPanic':   { zh: '内核恐慌',            en: 'Kernel Panic' },
+  'enemy.childProcess':  { zh: '子进程',              en: 'Child Process' },
   'enemy.corrupt':       { zh: '损坏文件',            en: 'Corrupted File' },
 
   // --- 主动武器 ---

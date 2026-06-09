@@ -788,6 +788,106 @@ function generateEnemySprite(typeKey, radius) {
     }
 
     // ============================================================
+    //  BOSS 4: Kernel Panic — 蓝屏死机 + 白色等宽字体 hex dump
+    // ============================================================
+    case 'kernelPanic': {
+      const bgClr = '#0044cc', bgHi = brighten(bgClr, 20), outline = darken(bgClr, 50);
+      const textClr = '#ffffff', textDim = '#aaaacc';
+      const m = 1;
+
+      // 蓝色背景
+      for (let row = m; row < d - m; row++)
+        for (let col = m; col < d - m; col++)
+          pset(c, d, col, row, bgClr);
+
+      // 顶部高光条
+      for (let col = m + 1; col < d - m - 1; col++)
+        pset(c, d, col, m + 1, bgHi);
+
+      // 左上方 ":( " 悲伤脸
+      const sadFaceX = Math.floor(d * 0.2), sadFaceY = Math.floor(d * 0.22);
+      const sadPixels = [
+        [0,0],[1,1],[2,2], // 左眼左上斜线
+        [-2,2],[-1,1],     // 右眼右上斜线
+        [-1,3],[0,4],[1,3], // 嘴巴倒弧
+      ];
+      for (const [dx, dy] of sadPixels) {
+        pset(c, d, sadFaceX + dx, sadFaceY + dy, textClr);
+        pset(c, d, sadFaceX + dx + 3, sadFaceY + dy, textClr);
+      }
+      // 鼻子竖线
+      for (let ny = 0; ny < 2; ny++)
+        pset(c, d, sadFaceX + 1, sadFaceY + 1 + ny, textClr);
+
+      // 标题文字行（模拟 "KERNEL PANIC" 用小点）
+      const titleY = sadFaceY + 6;
+      const titleText = 'KERNEL';
+      for (let i = 0; i < titleText.length; i++) {
+        const tx = Math.floor(d * 0.12) + i * 1.5;
+        if (tx + 1 < d - m) { pset(c, d, tx, titleY, textClr); pset(c, d, tx, titleY + 1, textClr); }
+      }
+
+      // Hex dump 行（模拟内存地址 + 数据）
+      const hexY = titleY + 3;
+      for (let row = 0; row < Math.floor((d - hexY - 2) / 1.5); row++) {
+        const ry = hexY + Math.floor(row * 1.5);
+        if (ry >= d - m) break;
+        // 地址前缀
+        for (let a = 0; a < 3; a++) pset(c, d, m + 1 + a, ry, textDim);
+        // 随机 hex 数据
+        const dataStart = m + 5;
+        for (let col = dataStart; col < d - m - 1; col++) {
+          if ((col - dataStart) % 6 < 4 && Math.random() > 0.2) {
+            pset(c, d, col, ry, col < dataStart + 12 ? textClr : textDim);
+          }
+        }
+      }
+
+      // 底部状态栏
+      const statusY = d - 3;
+      for (let col = m + 1; col < d - m - 1; col++) {
+        pset(c, d, col, statusY, textDim);
+        pset(c, d, col, statusY + 1, textClr);
+      }
+
+      // 边框
+      outlineShape(c, d, outline, BG);
+
+      // CRT 扫描线效果（水平条纹）
+      for (let row = m + 2; row < d - m - 2; row += 3)
+        for (let col = m + 1; col < d - m - 1; col += 3)
+          pset(c, d, col, row, darken(bgClr, 10));
+
+      break;
+    }
+
+    // ============================================================
+    //  Child Process — 小蓝屏
+    // ============================================================
+    case 'childProcess': {
+      const bgClr = '#0066ff', textClr = '#ffffff', outline = darken(bgClr, 50);
+      const m = 1;
+      for (let row = m; row < d - m; row++)
+        for (let col = m; col < d - m; col++)
+          pset(c, d, col, row, bgClr);
+
+      // 小型 ":( "
+      const cx = Math.floor(d / 2), cy = Math.floor(d * 0.4);
+      pset(c, d, cx - 1, cy - 1, textClr);
+      pset(c, d, cx, cy, textClr);
+      pset(c, d, cx + 1, cy + 1, textClr);
+      pset(c, d, cx - 2, cy + 1, textClr);
+      pset(c, d, cx + 2, cy - 1, textClr);
+
+      // 文字模拟
+      for (let col = m + 1; col < d - m - 1; col += 2)
+        pset(c, d, col, d - 3, textClr);
+
+      outlineShape(c, d, outline, BG);
+      break;
+    }
+
+    // ============================================================
     //  Corrupted File 小兵 — 绿色故障方块
     // ============================================================
     case 'corrupt': {
@@ -994,6 +1094,27 @@ export function drawProjectiles(ctx, projectiles) {
 
     // --- 敌人弹幕：红色像素粒子（USB 远程攻击） ---
     if (p._enemyProjectile) {
+      // Kernel Panic 内存碎片：白色小方块 + 抖动
+      if (p._isMemoryFrag) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(Date.now() / 300 + p._wobblePhase);
+
+        const s = p.radius * 1.2;
+        const pw = s, ph = s;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-pw / 2, -ph / 2, pw, ph);
+        // 核心亮点
+        ctx.fillStyle = 'rgba(200, 220, 255, 0.8)';
+        ctx.fillRect(-pw / 2 + s * 0.2, -ph / 2 + s * 0.2, pw - s * 0.4, ph - s * 0.4);
+        // 蓝色微光
+        ctx.fillStyle = 'rgba(0, 68, 204, 0.3)';
+        ctx.fillRect(-pw / 2 - s * 0.4, -ph / 2 - s * 0.4, pw + s * 0.8, ph + s * 0.8);
+
+        ctx.restore();
+        continue;
+      }
+
       ctx.save();
       ctx.translate(p.x, p.y);
       const angle = Math.atan2(p.vy, p.vx);
@@ -1573,6 +1694,49 @@ export function drawBossEffects(ctx, enemies) {
   for (const enemy of enemies) {
     if (!enemy.isBoss) continue;
 
+    // Kernel Panic 六边形文字护盾
+    if (enemy.typeKey === 'kernelPanic') {
+      const hexSides = 6;
+      const hexR = enemy.radius + 18;
+      const hexPts = [];
+      for (let i = 0; i < hexSides; i++) {
+        const a = (i / hexSides) * Math.PI * 2 - Math.PI / 2;
+        hexPts.push({ x: enemy.x + Math.cos(a) * hexR, y: enemy.y + Math.sin(a) * hexR });
+      }
+      // 绘制文字墙 — 每条边上有滚动的 hex 字符
+      for (let i = 0; i < hexSides; i++) {
+        const p1 = hexPts[i];
+        const p2 = hexPts[(i + 1) % hexSides];
+        const dx = p2.x - p1.x, dy = p2.y - p1.y;
+        const edgeLen = Math.sqrt(dx * dx + dy * dy);
+        const ux = dx / edgeLen, uy = dy / edgeLen;
+        // 字符滚动偏移
+        const scroll = (Date.now() / 200 + i * 0.7) % 1;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.font = '8px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const hexChars = '0123456789ABCDEF';
+        for (let c = 0; c < Math.floor(edgeLen / 8); c++) {
+          const t = (c / Math.floor(edgeLen / 8) + scroll) % 1;
+          const cx = p1.x + ux * edgeLen * t;
+          const cy = p1.y + uy * edgeLen * t;
+          const ch = hexChars[Math.floor((t * 16 + Date.now() / 500) % 16)];
+          ctx.fillText(ch, cx, cy);
+        }
+      }
+      // 半透明六边形边框
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(hexPts[0].x, hexPts[0].y);
+      for (let i = 1; i < hexSides; i++) ctx.lineTo(hexPts[i].x, hexPts[i].y);
+      ctx.closePath();
+      ctx.stroke();
+
+      continue; // 跳过通用 Boss 渲染（Kernel Panic 已自行处理）
+    }
+
     // CPU 热浪
     if (enemy._heatWaves && enemy._heatWaves.length > 0) {
       for (const w of enemy._heatWaves) {
@@ -1622,7 +1786,7 @@ export function drawBossEffects(ctx, enemies) {
 
 // ========== HUD ==========
 
-export function drawHUD(ctx, gameTime, kills, player, enemies, bossWarnings) {
+export function drawHUD(ctx, gameTime, kills, player, enemies, bossWarnings, systemCrashDebuff) {
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
 
@@ -1825,6 +1989,45 @@ export function drawHUD(ctx, gameTime, kills, player, enemies, bossWarnings) {
       ctx.fillStyle = `rgba(255, 50, 50, ${alpha})`;
       ctx.font = 'bold 14px monospace';
       ctx.fillText(t('boss.warning', { name: w.name }), CANVAS_WIDTH / 2, warnY);
+    }
+  }
+
+  // --- System Crash 状态指示 ---
+  if (systemCrashDebuff && systemCrashDebuff.timer > 0) {
+    const alpha = Math.min(1, systemCrashDebuff.timer / 0.5);
+    const pulse = 0.7 + 0.3 * Math.sin(Date.now() / 100);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const fy = CANVAS_HEIGHT / 2 + 100;
+    let label = '';
+    let color = '#ff4444';
+    if (systemCrashDebuff.type === 'cooldown') {
+      label = 'WEAPON OVERHEAT';
+      color = '#ff6348';
+    } else if (systemCrashDebuff.type === 'reverse') {
+      label = 'INPUT REVERSED';
+      color = '#ffaa00';
+    }
+    if (label) {
+      ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.3 * pulse})`;
+      ctx.font = 'bold 38px monospace';
+      ctx.fillText(label, CANVAS_WIDTH / 2 + 2, fy + 2);
+      ctx.fillStyle = color.replace(')', `, ${alpha * pulse})`).replace('rgb', 'rgba');
+      if (color.startsWith('#')) {
+        ctx.fillStyle = `rgba(255, 68, 68, ${alpha * pulse})`;
+      }
+      ctx.font = 'bold 28px monospace';
+      ctx.fillText(label, CANVAS_WIDTH / 2, fy);
+      // 倒计时条
+      const barW = 200, barH = 4;
+      const barX = CANVAS_WIDTH / 2 - barW / 2;
+      const barY = fy + 24;
+      const ratio = systemCrashDebuff.timer / (systemCrashDebuff.type === 'cooldown' ? 3 : 2.5);
+      ctx.fillStyle = `rgba(0, 0, 0, 0.6)`;
+      ctx.fillRect(barX, barY, barW, barH);
+      ctx.fillStyle = color.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+      if (color.startsWith('#')) ctx.fillStyle = `rgba(255, 100, 100, ${alpha})`;
+      ctx.fillRect(barX, barY, barW * ratio, barH);
     }
   }
 }

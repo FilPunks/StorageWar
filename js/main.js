@@ -22,6 +22,7 @@ import { t, getLanguage, setLanguage } from './i18n.js';
 import { initAudio, isMuted, toggleMute,
   playEnemyDeath, playBossDeath, playXpPickup,
   playBossWarning, playPlayerDamage, playPingPulse,
+  playKernelCrash,
 } from './audio.js';
 
 const STATE = { MENU: 'menu', PLAYING: 'playing', UPGRADING: 'upgrading', PAUSED: 'paused', GAMEOVER: 'gameover' };
@@ -193,6 +194,11 @@ class Game {
 
     // 玩家移动
     const inputVec = getMovementVector();
+    // System Crash: 方向反转
+    if (this._systemCrashDebuff && this._systemCrashDebuff.type === 'reverse') {
+      inputVec.x *= -1;
+      inputVec.y *= -1;
+    }
     this.player.update(dt, inputVec);
 
     // RAID Redundancy Lv5: 低血量回复翻倍
@@ -206,6 +212,9 @@ class Game {
 
     // 敌人生成
     this.spawner.update(dt, this.gameTime, this.enemies, SPAWNER.maxEnemies, this.camX, this.camY);
+
+    // Kernel Panic System Crash 逻辑更新
+    this.updateSystemCrash(dt);
 
     // 敌人移动
     for (const enemy of this.enemies) {
@@ -450,12 +459,54 @@ class Game {
     return false;
   }
 
+  /** System Crash：Kernel Panic Boss 的干扰 debuff */
+  updateSystemCrash(dt) {
+    // 检查 Kernel Panic Boss 是否触发了 System Crash
+    for (const enemy of this.enemies) {
+      if (enemy.typeKey !== 'kernelPanic' || !enemy._triggerSystemCrash) continue;
+      enemy._triggerSystemCrash = false;
+      playKernelCrash();
+
+      const types = ['reverse', 'teleport'];
+      const type = types[Math.floor(Math.random() * types.length)];
+
+      if (type === 'cooldown') {
+        this._systemCrashDebuff = { type: 'cooldown', timer: 3 };
+        for (const [, entry] of this.player.activeWeapons) {
+          entry._crashCDBonus = (entry._crashCDBonus || 0) + 0.5;
+        }
+      } else if (type === 'reverse') {
+        this._systemCrashDebuff = { type: 'reverse', timer: 2.5 };
+      } else if (type === 'teleport') {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 100 + Math.random() * 140;
+        this.player.x += Math.cos(angle) * dist;
+        this.player.y += Math.sin(angle) * dist;
+        addScreenShake(8, 0.4);
+        this._systemCrashDebuff = { type: null, timer: 0 };
+      }
+    }
+
+    if (this._systemCrashDebuff && this._systemCrashDebuff.timer > 0) {
+      this._systemCrashDebuff.timer -= dt;
+      if (this._systemCrashDebuff.timer <= 0) {
+        if (this._systemCrashDebuff.type === 'cooldown') {
+          for (const [, entry] of this.player.activeWeapons) {
+            entry._crashCDBonus = Math.max(0, (entry._crashCDBonus || 0) - 0.5);
+          }
+        }
+        this._systemCrashDebuff = null;
+      }
+    }
+  }
+
   /** Boss 定时生成 */
   spawnBosses(_dt) {
     const bosses = [
       { key: 'cpu', time: 90, name: t('enemy.cpu') },
       { key: 'rootkit', time: 240, name: t('enemy.rootkit') },
       { key: 'gpu', time: 450, name: t('enemy.gpu') },
+      { key: 'kernelPanic', time: 660, name: t('enemy.kernelPanic') },
     ];
     const warningDuration = 3; // 预警持续 3 秒
     for (const b of bosses) {
@@ -474,24 +525,23 @@ class Game {
       if (!this._bossesSpawned[b.key] && this.gameTime >= b.time) {
         this._bossesSpawned[b.key] = true;
         const def = { key: b.key, ...ENEMY_TYPES[b.key] };
-        // 在屏幕边缘生成，不在玩家脸上
         const margin = 100;
         const side = Math.floor(Math.random() * 4);
         let ex, ey;
         switch (side) {
-          case 0: // 上
+          case 0:
             ex = this.player.x + (Math.random() - 0.5) * CANVAS_WIDTH;
             ey = this.player.y - CANVAS_HEIGHT / 2 - margin;
             break;
-          case 1: // 下
+          case 1:
             ex = this.player.x + (Math.random() - 0.5) * CANVAS_WIDTH;
             ey = this.player.y + CANVAS_HEIGHT / 2 + margin;
             break;
-          case 2: // 左
+          case 2:
             ex = this.player.x - CANVAS_WIDTH / 2 - margin;
             ey = this.player.y + (Math.random() - 0.5) * CANVAS_HEIGHT;
             break;
-          case 3: // 右
+          case 3:
             ex = this.player.x + CANVAS_WIDTH / 2 + margin;
             ey = this.player.y + (Math.random() - 0.5) * CANVAS_HEIGHT;
             break;
@@ -579,6 +629,7 @@ class Game {
     this._bossesSpawned = {};
     this._bossesWarned = {};
     this._bossWarnings = [];
+    this._systemCrashDebuff = null;
     initPlayerWeapons(this.player);
     screenFX.shakeIntensity = 0;
     screenFX.shakeDuration = 0;
@@ -655,7 +706,7 @@ class Game {
 
     ctx.restore();
 
-    drawHUD(ctx, this.gameTime, this.kills, this.player, this.enemies, this._bossWarnings);
+    drawHUD(ctx, this.gameTime, this.kills, this.player, this.enemies, this._bossWarnings, this._systemCrashDebuff);
   }
 
   renderPause() {

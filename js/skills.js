@@ -344,7 +344,8 @@ export function updateAllWeapons(player, dt, ctx) {
     // 冷却型武器
     entry.cooldownTimer -= dt;
     if (entry.cooldownTimer <= 0) {
-      entry.cooldownTimer = baseCD * cdReduction;
+      const crashBonus = 1 + (entry._crashCDBonus || 0);
+      entry.cooldownTimer = baseCD * cdReduction * crashBonus;
       fireWeapon(weaponDef, player, entry, enemies, projectiles, particles, extraCount, dt);
     }
   }

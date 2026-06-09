@@ -124,7 +124,7 @@ export const ENEMY_TYPES = {
     shape: 'skull',
     color: '#00ff44',
     hpColor: '#00aa22',
-    hp: 1250,
+    hp: 1500,
     speed: 55,
     damage: 80,
     radius: 65,
@@ -138,14 +138,41 @@ export const ENEMY_TYPES = {
     shape: 'gpu',
     color: '#76b900',
     hpColor: '#4a8000',
-    hp: 3500,
+    hp: 1750,
     speed: 25,
     damage: 150,
-    radius: 100,
+    radius: 75,
     xpValue: 800,
     unlockTime: 9999,
     weight: 0,
     isBoss: true,
+  },
+  kernelPanic: {
+    name: 'Kernel Panic',
+    shape: 'bsod',
+    color: '#0044cc',
+    hpColor: '#0033aa',
+    hp: 2250,
+    speed: 28,
+    damage: 55,
+    radius: 65,
+    xpValue: 600,
+    unlockTime: 9999,
+    weight: 0,
+    isBoss: true,
+  },
+  childProcess: {
+    name: 'Child Process',
+    shape: 'smallBsod',
+    color: '#0066ff',
+    hpColor: '#0044cc',
+    hp: 350,
+    speed: 110,
+    damage: 28,
+    radius: 18,
+    xpValue: 60,
+    unlockTime: 9999,
+    weight: 0,
   },
   corrupt: {
     name: 'Corrupted File',
@@ -174,9 +201,9 @@ export const XP = {
 // --- 敌人生成器 ---
 export const SPAWNER = {
   initialInterval: 0.75,  // 初始生成间隔(秒)
-  minInterval: 0.1,       // 最小生成间隔
+  minInterval: 0.15,       // 最小生成间隔
   intervalDecay: 0.0023,  // 每秒减少的间隔
-  maxEnemies: 350,        // 场上最大敌人数
+  maxEnemies: 325,        // 场上最大敌人数
   spawnMargin: 60,        // 屏幕外生成距离
 };
 

@@ -2,6 +2,36 @@
 
 ---
 
+## version 0.3 (2026-06-09)
+
+**中文**
+
+- 新增第 4 个 Boss：Kernel Panic（内核恐慌），10:00 出场，蓝屏死机主题
+  - Core Dump：周期性 360° 密集弹幕（10→16 发），带正弦波抖动轨迹，无限射程
+  - System Crash：随机触发方向反转（2.5 秒）或随机传送 + 震屏
+  - Stack Overflow：半血时一次性生成 3 个 Child Process 子进程小兵
+  - 六边形 hex 文字护盾视觉效果
+  - 半血狂暴：Core Dump CD 减半、System Crash CD 缩短
+- 新增 Child Process 敌人类型（Kernel Panic 召唤）
+- GPU Boss 重新平衡：HP 3500→1500，半径 100→75px
+- Kernel Panic 半径 55→65px
+- Core Dump 弹幕视觉大小与碰撞半径挂钩
+
+**English**
+
+- New Boss 4: Kernel Panic (10:00), BSOD-themed
+  - Core Dump: periodic 360° dense projectile barrage (10→16 shots), wobbling trajectories, infinite range
+  - System Crash: randomly triggers input reversal (2.5s) or random teleport + screen shake
+  - Stack Overflow: spawns 3 Child Process minions at half HP
+  - Hex text wall visual shield
+  - Half-HP rage mode: Core Dump CD halved, System Crash CD reduced
+- New Child Process enemy type (spawned by Kernel Panic)
+- GPU boss rebalance: HP 3500→1500, radius 100→75px
+- Kernel Panic radius 55→65px
+- Core Dump projectile visual size now scales with collision radius
+
+---
+
 ## version 0.2 (2026-06-04)
 
 **中文**

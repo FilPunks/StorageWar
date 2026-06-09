@@ -463,6 +463,75 @@ export class Enemy {
         for (const ft of this._fireTrails) ft.life -= dt;
         this._fireTrails = this._fireTrails.filter(ft => ft.life > 0);
       }
+    } else if (this.typeKey === 'kernelPanic') {
+      // Boss 4: Kernel Panic — 缓慢追踪 + Core Dump + System Crash
+      const dir = normalize(playerX - this.x, playerY - this.y);
+      this.x += dir.x * this.speed * dt;
+      this.y += dir.y * this.speed * dt;
+
+      // Core Dump：周期性密集弹幕（半血后频率翻倍）
+      const hpRatio = this.hp / this.maxHp;
+      const rageMode = hpRatio < 0.5;
+      this.attackTimer += dt;
+      const coreDumpCD = rageMode ? 2.5 : 4.5;
+      if (this.attackTimer >= coreDumpCD && projectiles) {
+        this.attackTimer = 0;
+        const count = rageMode ? 16 : 10;
+        // 半血后触发一次性 Stack Overflow：生成 3 个子进程
+        if (rageMode && !this._hasSplit && enemies) {
+          this._hasSplit = true;
+          this._stackOverflowTriggered = true;
+          const childDef = { key: 'childProcess', ...ENEMY_TYPES.childProcess };
+          for (let c = 0; c < 3; c++) {
+            const cx = this.x + (Math.random() - 0.5) * 100;
+            const cy = this.y + (Math.random() - 0.5) * 100;
+            enemies.push(new Enemy(childDef, cx, cy, gameTime || 0));
+          }
+        }
+        for (let i = 0; i < count; i++) {
+          const baseAngle = (i / count) * Math.PI * 2;
+          const speed = 100 + Math.random() * 80;
+          projectiles.push({
+            x: this.x, y: this.y,
+            _baseVx: Math.cos(baseAngle) * speed,
+            _baseVy: Math.sin(baseAngle) * speed,
+            vx: Math.cos(baseAngle) * speed,
+            vy: Math.sin(baseAngle) * speed,
+            radius: 12, damage: Math.floor(this.damage * 0.4),
+            lifetime: 8, color: '#ffffff',
+            _enemyProjectile: true, _isMemoryFrag: true,
+            _wobblePhase: Math.random() * Math.PI * 2,
+            _wobbleAmp: 40 + Math.random() * 40,
+            update(dt) {
+              const lifeRatio = this.lifetime / 2.5;
+              const wobble = Math.sin(lifeRatio * 12 + this._wobblePhase) * this._wobbleAmp * lifeRatio;
+              const len = Math.sqrt(this._baseVx * this._baseVx + this._baseVy * this._baseVy) || 1;
+              this.vx = this._baseVx + (-this._baseVy / len) * wobble;
+              this.vy = this._baseVy + (this._baseVx / len) * wobble;
+              this.x += this.vx * dt;
+              this.y += this.vy * dt;
+              this.lifetime -= dt;
+            },
+            get isDead() { return this.lifetime <= 0; },
+          });
+        }
+      }
+
+      // System Crash 计时器（在 main.js 中处理实际 debuff）
+      if (!this._crashTimer) this._crashTimer = 0;
+      this._crashTimer += dt;
+      const crashCD = rageMode ? 7 : 10;
+      if (this._crashTimer >= crashCD) {
+        this._crashTimer = 0;
+        this._triggerSystemCrash = true;
+      }
+
+    } else if (this.typeKey === 'childProcess') {
+      // Child Process: 快速追踪玩家
+      const dir = normalize(playerX - this.x, playerY - this.y);
+      this.x += dir.x * this.speed * dt;
+      this.y += dir.y * this.speed * dt;
+
     } else {
       // 默认：向玩家移动
       const dir = normalize(playerX - this.x, playerY - this.y);
