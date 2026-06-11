@@ -127,8 +127,9 @@
     }
 
     body.is-mobile #game-canvas,
-    body.is-mobile #lang-toggle,
-    body.is-mobile #sound-toggle,
+    body.is-mobile #menu-btn,
+    body.is-mobile #menu-popup,
+    body.is-mobile #wallet-btn,
     body.is-mobile #donate-area,
     body.is-mobile #upgrade-overlay {
       display: none !important;
@@ -261,53 +262,18 @@
     .upgrade-card .rarity-epic { color: #a29bfe; }
     .upgrade-card .rarity-legendary { color: #ffd700; }
 
-    /* 语言切换按钮 */
-    #lang-toggle {
+    /* 菜单按钮 "···" */
+    #menu-btn {
       position: absolute;
       top: 16px;
       right: 16px;
-      z-index: 20;
+      z-index: 25;
       display: flex;
       align-items: center;
       justify-content: center;
       min-width: 36px;
       height: 28px;
-      padding: 3px 8px;
-      background: #2080f0;
-      color: #fff;
-      font-family: monospace;
-      font-size: 13px;
-      font-weight: bold;
-      text-align: center;
-      border: 2px solid #1050a0;
-      border-bottom: 4px solid #1050a0;
-      cursor: pointer;
-      image-rendering: pixelated;
-      letter-spacing: 1px;
-      text-shadow: 1px 1px 0 #1050a0;
-      user-select: none;
-      transition: transform 0.1s;
-      box-sizing: content-box;
-    }
-    #lang-toggle:hover {
-      background: #3090ff;
-      transform: scale(1.05);
-    }
-    #lang-toggle:active {
-      transform: translateY(2px);
-      border-bottom-width: 2px;
-    }
-    #sound-toggle {
-      position: absolute;
-      top: 16px;
-      right: 90px;
-      z-index: 20;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 36px;
-      height: 28px;
-      padding: 3px 8px;
+      padding: 3px 10px;
       background: #2080f0;
       color: #fff;
       font-family: monospace;
@@ -318,29 +284,101 @@
       border-bottom: 4px solid #1050a0;
       cursor: pointer;
       image-rendering: pixelated;
-      letter-spacing: 1px;
+      letter-spacing: 2px;
       text-shadow: 1px 1px 0 #1050a0;
       user-select: none;
       transition: transform 0.1s;
       box-sizing: content-box;
     }
-    #sound-toggle:hover {
+    #menu-btn:hover {
       background: #3090ff;
       transform: scale(1.05);
     }
-    #sound-toggle:active {
+    #menu-btn:active {
       transform: translateY(2px);
       border-bottom-width: 2px;
     }
-    #sound-toggle.muted {
-      background: #555;
-      border-color: #333;
-      border-bottom-color: #333;
-      text-shadow: 1px 1px 0 #333;
+    #menu-popup {
+      display: none;
+      position: absolute;
+      top: 48px;
+      right: 16px;
+      z-index: 30;
+      background: #1a1a3a;
+      border: 2px solid #3a3a6a;
+      border-radius: 4px;
+      padding: 4px;
+      min-width: 120px;
+    }
+    #menu-popup.open {
+      display: block;
+    }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px;
+      color: #dfe6e9;
+      font-family: monospace;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 2px;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .menu-item:hover {
+      background: #2a2a5a;
+    }
+    .menu-item .label {
+      margin-right: 12px;
+    }
+    .menu-item .val {
+      color: #74b9ff;
+    }
+    #wallet-btn {
+      position: absolute;
+      top: 16px;
+      right: 93px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      height: 28px;
+      padding: 3px 10px;
+      background: #2d3436;
+      color: #dfe6e9;
+      font-family: monospace;
+      font-size: 11px;
+      font-weight: bold;
+      text-align: center;
+      border: 2px solid #636e72;
+      border-bottom: 4px solid #636e72;
+      cursor: pointer;
+      image-rendering: pixelated;
+      letter-spacing: 0.5px;
+      text-shadow: 1px 1px 0 #222;
+      user-select: none;
+      transition: transform 0.1s, background 0.1s;
+      box-sizing: content-box;
+      white-space: nowrap;
+    }
+    #wallet-btn:hover {
+      background: #636e72;
+      transform: scale(1.05);
+    }
+    #wallet-btn:active {
+      transform: translateY(2px);
+      border-bottom-width: 2px;
+    }
+    #wallet-btn.connected {
+      background: #0984e3;
+      border-color: #0652DD;
+      border-bottom-color: #0652DD;
     }
     #donate-area {
       position: absolute;
-      bottom: 2px;
+      bottom: 0px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 20;
@@ -380,6 +418,32 @@
       font-size: 11px;
       user-select: none;
     }
+    #toast {
+      position: absolute;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      color: #ffd700;
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: bold;
+      text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+    }
+    #toast.show {
+      opacity: 1;
+    }
+    #toast.loading {
+      animation: toast-pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes toast-pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -409,12 +473,23 @@
           : '本游戏需要键盘和鼠标操作，不支持移动端';
       })();
     </script>
-    <div id="lang-toggle">中/EN</div>
-    <div id="sound-toggle">♪</div>
+    <div id="menu-btn">☰</div>
+    <div id="menu-popup">
+      <div class="menu-item" data-action="sound">
+        <span class="label" id="sound-label">Sound</span>
+        <span class="val" id="sound-val">ON</span>
+      </div>
+      <div class="menu-item" data-action="lang">
+        <span class="label" id="lang-label">Lang</span>
+        <span class="val" id="lang-val">EN</span>
+      </div>
+    </div>
+    <div id="wallet-btn">Connect</div>
     <div id="donate-area">
       <span id="donate-text"></span><button id="copy-btn">⎘</button>
     </div>
-    <div id="version-label">version 0.3</div>
+    <div id="version-label">version 1.0</div>
+    <div id="toast"></div>
     <div id="upgrade-overlay">
       <div id="upgrade-title">⭐ 升级！选择一个技能 ⭐</div>
       <div id="upgrade-choices"></div>
@@ -435,7 +510,19 @@
     })();
   </script>
 
+  <!-- ethers.js for wallet integration -->
+  <script src="https://unpkg.com/ethers@6.13.4/dist/ethers.umd.min.js"></script>
   <!-- 游戏模块，按依赖顺序加载 -->
   <script type="module" src="js/main.js?v=14"></script>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PHMMFRZV9B"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-PHMMFRZV9B');
+  </script>
 </body>
 </html>

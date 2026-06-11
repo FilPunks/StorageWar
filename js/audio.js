@@ -451,3 +451,37 @@ export function playKernelCrash() {
   osc.stop(now + 0.55);
   noise.stop(now + 0.35);
 }
+
+// ---- NFT 大招音效 ----
+
+export function playUltimateCharge() {
+  const c = ctx();
+  const now = c.currentTime;
+  // 蓄力音效：低频嗡鸣 + 上升音高 + 脉冲
+  const osc = c.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(55, now);
+  osc.frequency.linearRampToValueAtTime(180, now + 0.8);
+
+  const lfo = c.createOscillator();
+  lfo.type = 'sine';
+  lfo.frequency.value = 6;
+  const lfoGain = c.createGain();
+  lfoGain.gain.value = 20;
+  lfo.connect(lfoGain);
+  lfoGain.connect(osc.frequency);
+
+  const filter = c.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 200;
+  filter.frequency.linearRampToValueAtTime(800, now + 0.8);
+
+  const g = gainEnv(c, 0.15, 0.65, 0.2, now);
+  osc.connect(filter);
+  filter.connect(g);
+  g.connect(out());
+  lfo.start(now);
+  osc.start(now);
+  lfo.stop(now + 0.85);
+  osc.stop(now + 0.85);
+}

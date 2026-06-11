@@ -7,14 +7,17 @@ export const CANVAS_HEIGHT = 768;
 // --- 玩家 ---
 export const PLAYER = {
   radius: 18,
-  speed: 220,           // 像素/秒
+  speed: 220,
   maxHp: 100,
   damage: 25,
-  attackSpeed: 1.2,     // 每秒攻击次数
-  attackRange: 280,     // 自动索敌范围
-  pickupRange: 60,      // 经验拾取范围
-  invincibleTime: 0.3,  // 受击无敌时间(秒)
+  attackSpeed: 1.2,
+  attackRange: 280,
+  pickupRange: 60,
+  invincibleTime: 0.3,
 };
+
+// --- NFT 持有者大招 ---
+export const ULTIMATE_COOLDOWN = 30;
 
 // --- 弹幕 ---
 export const PROJECTILE = {
@@ -201,10 +204,10 @@ export const XP = {
 // --- 敌人生成器 ---
 export const SPAWNER = {
   initialInterval: 0.75,  // 初始生成间隔(秒)
-  minInterval: 0.15,       // 最小生成间隔
+  minInterval: 0.12,       // 最小生成间隔
   intervalDecay: 0.0023,  // 每秒减少的间隔
-  maxEnemies: 325,        // 场上最大敌人数
-  spawnMargin: 60,        // 屏幕外生成距离
+  maxEnemies: 350,        // 场上最大敌人数
+  spawnMargin: 80,        // 屏幕外生成距离
 };
 
 // --- 粒子 ---

@@ -373,7 +373,7 @@ export class Enemy {
             vx: Math.cos(a + spread) * 200,
             vy: Math.sin(a + spread) * 200,
             radius: 3, damage: Math.floor(this.damage * 0.5),
-            lifetime: 1.5, color: '#00ff44',
+            lifetime: 99, color: '#00ff44',
             _enemyProjectile: true,
             update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.lifetime -= dt; },
             get isDead() { return this.lifetime <= 0; },

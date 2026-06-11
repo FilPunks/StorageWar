@@ -151,6 +151,32 @@ const dict = {
   'mobile.subtitle':     { zh: 'A FilPunks Survival Game',            en: 'A FilPunks Survival Game' },
   'mobile.message':      { zh: '请使用电脑浏览器打开此页面',            en: 'Please open this page on a desktop browser' },
   'mobile.hint':         { zh: '本游戏需要键盘和鼠标操作，不支持移动端',  en: 'This game requires keyboard & mouse, mobile is not supported' },
+
+  // --- 钱包 ---
+  'wallet.connect':      { zh: '连接钱包',                    en: 'Connect Wallet' },
+  'wallet.noWallet':     { zh: '请先安装 MetaMask 或 Rabby 钱包', en: 'Please install MetaMask or Rabby wallet first' },
+  'wallet.wrongChain':   { zh: '请切换到 Filecoin 主网',       en: 'Please switch to Filecoin Mainnet' },
+  'wallet.noNft':        { zh: '该钱包没有 FilPunks NFT (${addr})', en: 'No FilPunks NFT found (${addr})' },
+  'wallet.nftFound':     { zh: '发现 ${n} 个 FilPunks NFT，查找中...',  en: 'Found ${n} FilPunks NFT(s), searching...' },
+  'wallet.nftNotFound':  { zh: '未能定位 NFT token',             en: 'Could not locate NFT token' },
+  'wallet.noMetadata':   { zh: '无法读取 NFT 元数据',            en: 'Cannot read NFT metadata' },
+  'wallet.loadMetadata': { zh: '正在加载 #${id} 元数据...',       en: 'Loading #${id} metadata...' },
+  'wallet.noImageUrl':   { zh: '无法获取 NFT 图片链接（IPFS 网关不可达）', en: 'Cannot get NFT image URL (IPFS gateway unreachable)' },
+  'wallet.loadImage':    { zh: '正在加载 #${id} 图片...',         en: 'Loading #${id} image...' },
+  'wallet.imageLoaded':  { zh: 'FilPunks #${id} 已加载',          en: 'FilPunks #${id} loaded' },
+  'wallet.imageFailed':  { zh: '图片加载失败（IPFS 网关全部超时）',  en: 'Image load failed (all IPFS gateways timed out)' },
+  'wallet.error':        { zh: '查询出错: ${msg}',                en: 'Query error: ${msg}' },
+
+  // --- NFT 大招 ---
+  'ultimate.needNft':   { zh: '需要持有 FilPunks NFT 才能释放大招', en: 'FilPunks NFT required to use ultimate' },
+  'ultimate.cooldown':  { zh: '冷却中 (${s}s)',                   en: 'Cooldown (${s}s)' },
+  'ultimate.cleared':   { zh: '🧹 ${n} 个敌人已清除',              en: '🧹 ${n} enemies swept' },
+
+  // --- 菜单 ---
+  'menu.sound':         { zh: '音效', en: 'Sound' },
+  'menu.lang':          { zh: '语言', en: 'Lang' },
+  'menu.soundOn':       { zh: '开',   en: 'ON' },
+  'menu.soundOff':      { zh: '关',   en: 'OFF' },
 };
 
 // ============================================================

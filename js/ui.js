@@ -38,7 +38,7 @@ export class UpgradeUI {
         const currentLv = (player?.skillLevels?.[skill.id]) || 0;
         const lvBadge = currentLv === 0
           ? `<span class="new-badge">${t('upgrade.new')}</span>`
-          : `<span class="lv-badge">${t('upgrade.lv', { n: currentLv })}</span>`;
+          : `<span class="lv-badge">Lv${currentLv} → ${currentLv + 1}</span>`;
 
         card.className = 'upgrade-card';
         card.style.borderColor = borderColor;

@@ -2,6 +2,40 @@
 
 ---
 
+## version 1.0 (2026-06-10)
+
+**中文**
+
+- 新增钱包连接：右上角「Connect Wallet」按钮，支持 MetaMask / Rabby 连接 Filecoin 主网
+- NFT 头像替换：连接后若持有 FilPunks NFT（合约 0xf7Ceaa5DA7305b87361f9db6A300BD6D74c674D2），玩家精灵自动替换为持有的 NFT 图片
+- 11 个 IPFS 网关并发竞速（Promise.any），首个成功即返回，大幅提升加载速度
+- 新增 Q 键大招「GC Sweep」：仅限 NFT 持有者，瞬间清屏所有非 Boss 敌人并转化为经验币，30 秒冷却
+- 按 Q 后链上实时验证 `balanceOf`，无法通过控制台绕过
+- 蓄力期间：金色扩散光环 + 旋转粒子 + 击退周围敌人 + 低频嗡鸣音效
+- HUD 右下角大招冷却图标（🧹），WoW 风格扇形遮罩扫过，中央倒计时数字
+- 右上角按钮整合为 ☰ 菜单，点击展开音效开关和语言切换
+- Toast 通知系统：钱包/NFT 状态、大招反馈均有中英双语提示
+- 升级卡片显示「Lv3 → 4」当前到下一级的变化
+- Rootkit Boss 弹幕取消射程限制
+- 所有 UI 文案中英双语全覆盖
+
+**English**
+
+- Wallet connection: "Connect Wallet" button at top-right, supports MetaMask/Rabby on Filecoin mainnet
+- NFT avatar replacement: connected wallet's FilPunks NFT (0xf7Ceaa5DA7305b87361f9db6A300BD6D74c674D2) replaces player sprite
+- 11 IPFS gateways raced via Promise.any, fastest wins — much faster loading
+- Q key ultimate "GC Sweep": NFT holders only, instantly clears all non-boss enemies → XP coins, 30s cooldown
+- On-chain `balanceOf` verification on each Q press, not bypassable via console
+- Charge-up: expanding golden rings + orbiting particles + knockback + rising synth sound
+- Ultimate cooldown icon (🧹) at bottom-right HUD with WoW-style radial sweep + countdown
+- Top-right buttons consolidated into ☰ menu with sound toggle and language switch
+- Toast notification system: wallet/NFT status and ultimate feedback, fully bilingual
+- Upgrade cards show "Lv3 → 4" (current → next level)
+- Rootkit boss projectiles: unlimited range
+- All UI text fully bilingual (Chinese / English)
+
+---
+
 ## version 0.3 (2026-06-09)
 
 **中文**

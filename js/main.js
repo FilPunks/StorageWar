@@ -1,11 +1,11 @@
 // Storage War — 主入口 & 游戏循环 v2（武器系统集成）
 
-import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, SPAWNER, ENEMY_TYPES } from './constants.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, SPAWNER, ENEMY_TYPES, ULTIMATE_COOLDOWN } from './constants.js';
 import { initInput, getMovementVector, isKeyPressed, isKeyJustPressed } from './input.js';
 import { Player, XpCoin, Enemy } from './entities.js';
 import {
   drawBackground, drawPlayer, drawEnemies, drawProjectiles,
-  drawXpCoins, drawParticles, drawHUD, drawPlayerEffects, drawBossEffects,
+  drawXpCoins, drawParticles, drawHUD, drawPlayerEffects, drawBossEffects, drawChargeEffect,
 } from './renderer.js';
 import { EnemySpawner } from './systems.js';
 import { distance, circleCollision } from './utils.js';
@@ -22,8 +22,12 @@ import { t, getLanguage, setLanguage } from './i18n.js';
 import { initAudio, isMuted, toggleMute,
   playEnemyDeath, playBossDeath, playXpPickup,
   playBossWarning, playPlayerDamage, playPingPulse,
-  playKernelCrash,
+  playKernelCrash, playUltimateCharge,
 } from './audio.js';
+import {
+  connectWallet, disconnectWallet, isConnected, getConnectedAddress,
+  onAddressChange, hasWallet, tryRestoreSession, onToast, hasNft, verifyOwnership,
+} from './wallet.js';
 
 const STATE = { MENU: 'menu', PLAYING: 'playing', UPGRADING: 'upgrading', PAUSED: 'paused', GAMEOVER: 'gameover' };
 
@@ -52,24 +56,38 @@ class Game {
     this.paused = false;
     this.upgradeUI = new UpgradeUI();
 
-    // 语言切换按钮
-    this.langBtn = document.getElementById('lang-toggle');
-    this._updateLangBtn();
-    this.langBtn.addEventListener('click', () => {
-      const newLang = getLanguage() === 'zh' ? 'en' : 'zh';
-      setLanguage(newLang);
-      this._updateLangBtn();
-      this._updateDonateText();
-      const title = document.getElementById('upgrade-title');
-      if (title) title.textContent = t('upgrade.title');
+    // ··· 菜单按钮
+    this.menuBtn = document.getElementById('menu-btn');
+    this.menuPopup = document.getElementById('menu-popup');
+    this._updateMenuItems();
+    this.menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.menuPopup.classList.toggle('open');
     });
-
-    // 音效开关按钮
-    this.soundBtn = document.getElementById('sound-toggle');
-    this._updateSoundBtn();
-    this.soundBtn.addEventListener('click', () => {
-      toggleMute();
-      this._updateSoundBtn();
+    // 点击别处关闭菜单
+    document.addEventListener('click', (e) => {
+      if (!this.menuPopup.contains(e.target) && e.target !== this.menuBtn) {
+        this.menuPopup.classList.remove('open');
+      }
+    });
+    // 菜单项点击
+    this.menuPopup.addEventListener('click', (e) => {
+      const item = e.target.closest('.menu-item');
+      if (!item) return;
+      const action = item.dataset.action;
+      if (action === 'lang') {
+        const newLang = getLanguage() === 'zh' ? 'en' : 'zh';
+        setLanguage(newLang);
+        this._updateMenuItems();
+        this._updateDonateText();
+        this._updateWalletBtn();
+        const title = document.getElementById('upgrade-title');
+        if (title) title.textContent = t('upgrade.title');
+      } else if (action === 'sound') {
+        toggleMute();
+        this._updateMenuItems();
+      }
+      this.menuPopup.classList.remove('open');
     });
 
     // 赞助复制按钮
@@ -87,6 +105,22 @@ class Game {
         }, 1500);
       }).catch(() => {});
     });
+
+    // 钱包连接按钮
+    this.walletBtn = document.getElementById('wallet-btn');
+    this._updateWalletBtn();
+    onAddressChange((address) => this._onWalletAddressChange(address));
+    this.walletBtn.addEventListener('click', () => this._handleWalletClick());
+
+    // 钱包通知 toast
+    this.toastEl = document.getElementById('toast');
+    this._toastTimer = null;
+    onToast((msg, sticky) => this._showToast(msg, sticky));
+
+    // NFT 大招状态
+    this.ultimateCooldown = 0;
+    this._ultimateCharging = false;
+    this._chargeStart = 0;
   }
 
   start() {
@@ -94,30 +128,106 @@ class Game {
     this.running = true;
     this.lastTime = performance.now();
     this.loop(this.lastTime);
+    // 尝试恢复之前的钱包连接状态
+    tryRestoreSession().then(() => this._updateWalletBtn());
   }
 
-  _updateLangBtn() {
-    if (this.langBtn) {
-      this.langBtn.textContent = '中/EN';
+  _updateMenuItems() {
+    const soundLabel = document.getElementById('sound-label');
+    if (soundLabel) soundLabel.textContent = t('menu.sound');
+    const soundVal = document.getElementById('sound-val');
+    if (soundVal) {
+      soundVal.textContent = isMuted() ? t('menu.soundOff') : t('menu.soundOn');
+      soundVal.style.color = isMuted() ? '#e74c3c' : '#55efc4';
     }
-  }
-
-  _updateSoundBtn() {
-    if (this.soundBtn) {
-      if (isMuted()) {
-        this.soundBtn.textContent = '♪';
-        this.soundBtn.classList.add('muted');
-      } else {
-        this.soundBtn.textContent = '♪';
-        this.soundBtn.classList.remove('muted');
-      }
-    }
+    const langLabel = document.getElementById('lang-label');
+    if (langLabel) langLabel.textContent = t('menu.lang');
+    const langVal = document.getElementById('lang-val');
+    if (langVal) langVal.textContent = getLanguage() === 'zh' ? '中文' : 'EN';
   }
 
   _updateDonateText() {
     if (this.donateText) {
       this.donateText.textContent = t('menu.donate');
     }
+  }
+
+  _updateWalletBtn() {
+    if (!this.walletBtn) return;
+    const addr = getConnectedAddress();
+    if (addr) {
+      this.walletBtn.textContent = addr.slice(0, 6) + '...' + addr.slice(-4);
+      this.walletBtn.classList.add('connected');
+    } else {
+      this.walletBtn.textContent = t('wallet.connect');
+      this.walletBtn.classList.remove('connected');
+    }
+  }
+
+  async _handleWalletClick() {
+    if (isConnected()) {
+      disconnectWallet();
+      this._updateWalletBtn();
+    } else {
+      if (!hasWallet()) {
+        alert(t('wallet.noWallet'));
+        return;
+      }
+      this.walletBtn.textContent = '...';
+      const result = await connectWallet();
+      if (result.success) {
+        this._updateWalletBtn();
+      } else {
+        this._updateWalletBtn();
+        if (result.error === 'wrong_chain') {
+          alert(t('wallet.wrongChain'));
+        }
+      }
+    }
+  }
+
+  _onWalletAddressChange(address) {
+    this._updateWalletBtn();
+  }
+
+  _showToast(msg, sticky) {
+    if (!this.toastEl) return;
+    this.toastEl.textContent = msg;
+    this.toastEl.classList.add('show');
+    clearTimeout(this._toastTimer);
+    if (sticky) {
+      this.toastEl.classList.add('loading');
+    } else {
+      this.toastEl.classList.remove('loading');
+      this._toastTimer = setTimeout(() => {
+        this.toastEl.classList.remove('show');
+      }, 4000);
+    }
+  }
+
+  _activateUltimate() {
+    this.ultimateCooldown = ULTIMATE_COOLDOWN;
+
+    let count = 0;
+    for (const enemy of this.enemies) {
+      if (!enemy.isBoss) {
+        this.xpCoins.push(new XpCoin(enemy.x, enemy.y, enemy.xpValue));
+        spawnDeathParticles(this.particles, enemy.x, enemy.y, enemy.color || '#ff6348', 12);
+        count++;
+      }
+    }
+
+    this.enemies = this.enemies.filter(e => e.isBoss);
+
+    if (count > 0) {
+      playEnemyDeath();
+      addScreenShake(8, 0.4);
+      for (const coin of this.xpCoins) {
+        if (coin.lifetime > 0) coin.beingMagnetized = true;
+      }
+    }
+
+    this._showToast(t('ultimate.cleared', { n: count.toString() }), false);
   }
 
   /** Retro 像素风多层文字渲染 */
@@ -175,6 +285,29 @@ class Game {
       return;
     }
 
+    if (isKeyJustPressed('q') && this.state === STATE.PLAYING) {
+      if (this.ultimateCooldown > 0) {
+        this._showToast(t('ultimate.cooldown', { s: Math.ceil(this.ultimateCooldown) }), false);
+      } else if (!hasNft()) {
+        this._showToast(t('ultimate.needNft'), false);
+      } else {
+        // 链上实时验证 + 蓄力效果
+        this._ultimateCharging = true;
+        this._chargeStart = performance.now();
+        playUltimateCharge();
+        this._showToast('Verifying...', true);
+        verifyOwnership().then(owns => {
+          this._ultimateCharging = false;
+          if (!this.toastEl) return;
+          if (owns && this.ultimateCooldown <= 0) {
+            this._activateUltimate();
+          } else {
+            this._showToast(t('ultimate.needNft'), false);
+          }
+        });
+      }
+    }
+
     switch (this.state) {
       case STATE.MENU: this.updateMenu(dt); break;
       case STATE.PLAYING: this.updatePlaying(dt); break;
@@ -191,6 +324,9 @@ class Game {
   updatePlaying(dt) {
     this.gameTime += dt;
     updateScreenFX(dt);
+
+    // NFT 大招冷却
+    if (this.ultimateCooldown > 0) this.ultimateCooldown -= dt;
 
     // 玩家移动
     const inputVec = getMovementVector();
@@ -215,6 +351,23 @@ class Game {
 
     // Kernel Panic System Crash 逻辑更新
     this.updateSystemCrash(dt);
+
+    // 大招蓄力击退效果
+    if (this._ultimateCharging) {
+      const elapsed = (performance.now() - this._chargeStart) / 1000;
+      const strength = 120 + elapsed * 60; // 越蓄越强
+      for (const enemy of this.enemies) {
+        if (enemy.isBoss || enemy.hp <= 0) continue;
+        const dx = enemy.x - this.player.x;
+        const dy = enemy.y - this.player.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > 0 && dist < 180) {
+          const force = (1 - dist / 180) * strength * dt;
+          enemy.x += (dx / dist) * force;
+          enemy.y += (dy / dist) * force;
+        }
+      }
+    }
 
     // 敌人移动
     for (const enemy of this.enemies) {
@@ -630,6 +783,7 @@ class Game {
     this._bossesWarned = {};
     this._bossWarnings = [];
     this._systemCrashDebuff = null;
+    this.ultimateCooldown = 0;
     initPlayerWeapons(this.player);
     screenFX.shakeIntensity = 0;
     screenFX.shakeDuration = 0;
@@ -700,13 +854,23 @@ class Game {
       drawPlayerEffects(ctx, this.player);
     }
 
+    // 大招蓄力效果
+    if (this._ultimateCharging) {
+      const elapsed = (performance.now() - this._chargeStart) / 1000;
+      drawChargeEffect(ctx, this.player.x, this.player.y, elapsed);
+    }
+
     drawProjectiles(ctx, this.projectiles);
     drawParticles(ctx, this.particles);
     drawBossEffects(ctx, this.enemies);
 
     ctx.restore();
 
-    drawHUD(ctx, this.gameTime, this.kills, this.player, this.enemies, this._bossWarnings, this._systemCrashDebuff);
+    drawHUD(ctx, this.gameTime, this.kills, this.player, this.enemies, this._bossWarnings, this._systemCrashDebuff, {
+      showUltimate: hasNft(),
+      cooldown: this.ultimateCooldown,
+      maxCooldown: ULTIMATE_COOLDOWN,
+    });
   }
 
   renderPause() {

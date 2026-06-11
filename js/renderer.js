@@ -8,10 +8,22 @@ const PASSIVE_COLOR = '#55efc4';
 
 // ========== 玩家精灵图加载 ==========
 
-const playerSprite = new Image();
+let playerSprite = new Image();
 playerSprite.src = './205.png';
 let spriteLoaded = false;
 playerSprite.onload = () => { spriteLoaded = true; };
+
+export function setPlayerSprite(img) {
+  playerSprite = img;
+  spriteLoaded = true;
+}
+
+export function resetPlayerSprite() {
+  playerSprite = new Image();
+  playerSprite.src = './205.png';
+  spriteLoaded = false;
+  playerSprite.onload = () => { spriteLoaded = true; };
+}
 
 // ========== XP Coin 精灵图加载（Filecoin 标志） ==========
 
@@ -1786,7 +1798,7 @@ export function drawBossEffects(ctx, enemies) {
 
 // ========== HUD ==========
 
-export function drawHUD(ctx, gameTime, kills, player, enemies, bossWarnings, systemCrashDebuff) {
+export function drawHUD(ctx, gameTime, kills, player, enemies, bossWarnings, systemCrashDebuff, ultimateState) {
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
 
@@ -1861,6 +1873,50 @@ export function drawHUD(ctx, gameTime, kills, player, enemies, bossWarnings, sys
 
   // 左侧 HUD 中位线：HP 条顶 到 XP 条底 的中点
   const leftHudCenterY = (barY + xpBarY + barHeight) / 2;
+
+  // --- NFT 大招冷却图标（右下，等级上方）---
+  if (ultimateState && ultimateState.showUltimate) {
+    const iconSize = 48;
+    const iconX = CANVAS_WIDTH - pad - iconSize;
+    const iconY = leftHudCenterY - iconSize - 35; // 与等级文字留白
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // 背景方框
+    ctx.fillStyle = '#0a0a1e';
+    ctx.fillRect(iconX, iconY, iconSize, iconSize);
+    ctx.strokeStyle = ultimateState.cooldown > 0 ? '#636e72' : '#ffd700';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(iconX, iconY, iconSize, iconSize);
+
+    // emoji 图标
+    ctx.font = '24px monospace';
+    ctx.fillStyle = '#fff';
+    ctx.fillText('🧹', iconX + iconSize / 2, iconY + iconSize / 2);
+
+    // 冷却扇形遮罩 + 倒计时数字
+    if (ultimateState.cooldown > 0) {
+      const progress = ultimateState.cooldown / ultimateState.maxCooldown;
+      const cx = iconX + iconSize / 2;
+      const cy = iconY + iconSize / 2;
+      const r = iconSize * 0.75;
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2, false);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(0,0,0,0.75)';
+      ctx.fill();
+
+      ctx.font = 'bold 16px monospace';
+      ctx.fillStyle = '#fff';
+      ctx.fillText(Math.ceil(ultimateState.cooldown), cx, cy);
+    }
+
+    ctx.restore();
+  }
 
   // 收集已习得技能（按习得顺序，先习得的靠右靠近等级）
   const skillEntries = [];
@@ -2056,4 +2112,50 @@ function drawLightningPath(ctx, points, jitter) {
       ctx.lineTo(mx, my);
     }
   }
+}
+
+// ========== 大招蓄力效果 ==========
+
+export function drawChargeEffect(ctx, x, y, elapsed) {
+  const maxRings = 3;
+  const ringPeriod = 0.6;
+
+  ctx.save();
+
+  // 扩散光环
+  for (let i = 0; i < maxRings; i++) {
+    const phase = (elapsed / ringPeriod + i / maxRings) % 1;
+    const r = 40 + phase * 120;
+    const alpha = 0.6 * (1 - phase);
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255,215,0,${alpha})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // 玩家光晕
+  const glowAlpha = 0.3 + Math.sin(elapsed * 6) * 0.15;
+  const gradient = ctx.createRadialGradient(x, y, 0, x, y, 40);
+  gradient.addColorStop(0, `rgba(255,215,0,${glowAlpha})`);
+  gradient.addColorStop(1, 'rgba(255,215,0,0)');
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(x, y, 40, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 旋转粒子
+  for (let i = 0; i < 8; i++) {
+    const angle = (elapsed * 3 + i * Math.PI * 2 / 8) % (Math.PI * 2);
+    const dist = 55 + Math.sin(elapsed * 5 + i) * 15;
+    const px = x + Math.cos(angle) * dist;
+    const py = y + Math.sin(angle) * dist;
+    const pa = 0.4 + Math.sin(elapsed * 4 + i) * 0.3;
+    ctx.fillStyle = `rgba(255,215,0,${pa})`;
+    ctx.beginPath();
+    ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
 }
