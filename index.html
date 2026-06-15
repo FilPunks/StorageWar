@@ -408,6 +408,31 @@
     #copy-btn.copied {
       color: #27ae60;
     }
+    #menu-mint-overlay {
+      display: none;
+      position: absolute;
+      top: 516px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      color: #dfe6e9;
+      font-family: monospace;
+      font-size: 16px;
+      text-align: center;
+      white-space: nowrap;
+      pointer-events: auto;
+    }
+    #menu-mint-overlay.visible {
+      display: block;
+    }
+    #menu-mint-overlay a {
+      color: #ffd700;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    #menu-mint-overlay a:hover {
+      color: #ffeaa7;
+    }
     #version-label {
       position: absolute;
       bottom: 2px;
@@ -483,13 +508,18 @@
         <span class="label" id="lang-label">Lang</span>
         <span class="val" id="lang-val">EN</span>
       </div>
+      <div class="menu-item" data-action="mint">
+        <span class="label" id="mint-label">铸造 Filpunks NFT</span>
+        <span class="val">↗</span>
+      </div>
     </div>
     <div id="wallet-btn">Connect</div>
     <div id="donate-area">
       <span id="donate-text"></span><button id="copy-btn">⎘</button>
     </div>
-    <div id="version-label">version 1.0</div>
+    <div id="version-label">version 1.1</div>
     <div id="toast"></div>
+    <div id="menu-mint-overlay"></div>
     <div id="upgrade-overlay">
       <div id="upgrade-title">⭐ 升级！选择一个技能 ⭐</div>
       <div id="upgrade-choices"></div>

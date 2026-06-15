@@ -2,6 +2,22 @@
 
 ---
 
+## version 1.1 (2026-06-15)
+
+**中文**
+
+- 主菜单新增"在**这里**铸造 Filpunks NFT，获得大招"提示，**这里**为超链接跳转 filpunks.io
+- 右上角 ☰ 菜单新增「铸造 Filpunks NFT ↗」选项，点击跳转 filpunks.io
+- "Press SPACE / ENTER to Start" 字号加大，与上方说明文字留白增加
+
+**English**
+
+- Main menu: added "Mint Filpunks NFT **here** to unlock ultimate" hint, with **here** linking to filpunks.io
+- ☰ menu: added "Mint Filpunks NFT ↗" option linking to filpunks.io
+- "Press SPACE / ENTER to Start" font size increased, spacing from instructions widened
+
+---
+
 ## version 1.0 (2026-06-10)
 
 **中文**

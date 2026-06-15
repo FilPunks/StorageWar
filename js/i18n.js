@@ -24,6 +24,8 @@ const dict = {
   'menu.auto':           { zh: '自动攻击 + 多种武器技能',              en: 'Auto-attack + Multiple Weapon Skills' },
   'menu.collect':        { zh: '收集经验 → 升级 → 选择技能 → 存活更久', en: 'Collect XP → Level Up → Pick Skills → Survive' },
   'menu.start':          { zh: '按 SPACE / ENTER 开始游戏',           en: 'Press SPACE / ENTER to Start' },
+  'menu.mintNft':        { zh: '在${link}铸造 Filpunks NFT，获得大招',   en: 'Mint Filpunks NFT ${link} to unlock ultimate' },
+  'menu.mintNftLink':    { zh: '这里', en: 'here' },
   'menu.donate':         { zh: '如果你喜欢这个游戏，可以考虑赞助我们一些 AI token。0x8fD277649299407aef2BF6Bd88c89D2f14a75EfC', en: 'If you like the game, please consider buy us some AI tokens. 0x8fD277649299407aef2BF6Bd88c89D2f14a75EfC' },
 
   // --- 游戏结束 ---
@@ -175,6 +177,7 @@ const dict = {
   // --- 菜单 ---
   'menu.sound':         { zh: '音效', en: 'Sound' },
   'menu.lang':          { zh: '语言', en: 'Lang' },
+  'menu.mintNftItem':   { zh: '铸造 Filpunks NFT', en: 'Mint Filpunks NFT' },
   'menu.soundOn':       { zh: '开',   en: 'ON' },
   'menu.soundOff':      { zh: '关',   en: 'OFF' },
 };

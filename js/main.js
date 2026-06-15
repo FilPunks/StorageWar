@@ -59,6 +59,8 @@ class Game {
     // ··· 菜单按钮
     this.menuBtn = document.getElementById('menu-btn');
     this.menuPopup = document.getElementById('menu-popup');
+    this.mintOverlay = document.getElementById('menu-mint-overlay');
+    this.mintLabel = document.getElementById('mint-label');
     this._updateMenuItems();
     this.menuBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -86,6 +88,8 @@ class Game {
       } else if (action === 'sound') {
         toggleMute();
         this._updateMenuItems();
+      } else if (action === 'mint') {
+        window.open('https://www.filpunks.io/', '_blank');
       }
       this.menuPopup.classList.remove('open');
     });
@@ -144,6 +148,11 @@ class Game {
     if (langLabel) langLabel.textContent = t('menu.lang');
     const langVal = document.getElementById('lang-val');
     if (langVal) langVal.textContent = getLanguage() === 'zh' ? '中文' : 'EN';
+    if (this.mintLabel) this.mintLabel.textContent = t('menu.mintNftItem');
+    if (this.mintOverlay) {
+      const linkHtml = `<a href="https://www.filpunks.io/" target="_blank">${t('menu.mintNftLink')}</a>`;
+      this.mintOverlay.innerHTML = t('menu.mintNft', { link: linkHtml });
+    }
   }
 
   _updateDonateText() {
@@ -804,6 +813,11 @@ class Game {
     const { ctx } = this;
     drawBackground(ctx, this.camX, this.camY);
 
+    // 主菜单 mint 链接浮层显隐
+    if (this.mintOverlay) {
+      this.mintOverlay.classList.toggle('visible', this.state === STATE.MENU);
+    }
+
     switch (this.state) {
       case STATE.MENU: this.renderMenu(); break;
       case STATE.PLAYING:
@@ -835,8 +849,8 @@ class Game {
     ctx.fillText(t('menu.collect'), cx, cy + 110);
     const alpha = 0.5 + 0.5 * Math.sin(Date.now() / 600);
     ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-    ctx.font = 'bold 20px monospace';
-    ctx.fillText(t('menu.start'), cx, cy + 180);
+    ctx.font = 'bold 24px monospace';
+    ctx.fillText(t('menu.start'), cx, cy + 210);
   }
 
   renderPlaying() {
