@@ -8,6 +8,7 @@ import {
   playRootkitSpawn, playRootkitProjectile,
   playGpuBeam, playGpuVolley,
   playPlayerDamage,
+  playPumpGrow, playPumpExplode,
 } from './audio.js';
 
 /** 玩家 */
@@ -531,6 +532,224 @@ export class Enemy {
       const dir = normalize(playerX - this.x, playerY - this.y);
       this.x += dir.x * this.speed * dt;
       this.y += dir.y * this.speed * dt;
+
+    } else if (this.typeKey === 'pumpAndDump') {
+      // Pump & Dump — 三阶段循环 Boss
+      if (!this._phase) {
+        this._phase = 'pump';
+        this._phaseTimer = 0;
+        this._pumpMeter = 0;
+        this._baseRadius = this.radius;
+      }
+
+      const hpRatio = this.hp / this.maxHp;
+      this._phaseTimer += dt;
+
+      if (this._phase === 'pump') {
+        // 膨胀期：变大、变慢、远程吸取 XP 币
+        const pumpDuration = 6 + Math.random() * 2;
+        const progress = Math.min(1, this._phaseTimer / pumpDuration);
+        this.radius = this._baseRadius + progress * 55;
+        this.speed = savedSpeed * (1 - progress * 0.6);
+        this._xpSuction = true;
+        this._xpSuctionRadius = 500;
+
+        const dir = normalize(playerX - this.x, playerY - this.y);
+        this.x += dir.x * this.speed * dt;
+        this.y += dir.y * this.speed * dt;
+
+        // 稀疏弹幕（不限距离）
+        this.attackTimer += dt;
+        if (this.attackTimer >= 1.8 && projectiles) {
+          this.attackTimer = 0;
+          const a = Math.atan2(playerY - this.y, playerX - this.x);
+          projectiles.push({
+            x: this.x, y: this.y,
+            vx: Math.cos(a) * 150, vy: Math.sin(a) * 150,
+            radius: 4, damage: Math.floor(this.damage * 0.4),
+            lifetime: 99, color: '#22cc66',
+            _enemyProjectile: true,
+            update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.lifetime -= dt; },
+            get isDead() { return this.lifetime <= 0; },
+          });
+        }
+
+        if (progress >= 1) {
+          this._phase = 'peak';
+          this._phaseTimer = 0;
+          playPumpGrow();
+        }
+
+      } else if (this._phase === 'peak') {
+        // 峰值预警 0.8s
+        if (this._phaseTimer >= 0.8) {
+          // Dump 爆炸
+          playPumpExplode();
+          if (projectiles) {
+            const ringDmg = Math.floor(this.damage * (1 + this._pumpMeter * 0.02));
+            // 大范围冲击波
+            projectiles.push({
+              x: this.x, y: this.y,
+              vx: 0, vy: 0, radius: 0,
+              _expandSpeed: 500, _maxRadius: 500,
+              damage: Math.min(ringDmg, this.damage * 3),
+              lifetime: 1.0, maxLife: 1.0, color: '#ff3333',
+              _enemyProjectile: true, _isDumpRing: true,
+              update(dt) { this.radius += this._expandSpeed * dt; this.lifetime -= dt; },
+              get isDead() { return this.lifetime <= 0; },
+            });
+            // 弹片：红色 XP（数量随 pumpMeter）
+            const shrapCount = 8 + Math.floor(this._pumpMeter * 0.5);
+            for (let i = 0; i < shrapCount; i++) {
+              const sa = (i / shrapCount) * Math.PI * 2 + Math.random() * 0.3;
+              const ss = 180 + Math.random() * 250;
+              projectiles.push({
+                x: this.x, y: this.y,
+                vx: Math.cos(sa) * ss, vy: Math.sin(sa) * ss,
+                radius: 6, damage: Math.floor(this.damage * 0.6),
+                lifetime: 99, color: '#ff3333',
+                _enemyProjectile: true, _isRedXp: true,
+                update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.lifetime -= dt; },
+                get isDead() { return this.lifetime <= 0; },
+              });
+            }
+          }
+          this._phase = 'crash';
+          this._phaseTimer = 0;
+          this._pumpMeter = 0;
+        }
+
+      } else if (this._phase === 'crash') {
+        // 低谷期：小而快，逃跑
+        this._xpSuction = false;
+        this.radius = this._baseRadius * 0.45;
+        this.speed = savedSpeed * 1.5;
+        const fleeDir = normalize(this.x - playerX, this.y - playerY);
+        this.x += fleeDir.x * this.speed * dt;
+        this.y += fleeDir.y * this.speed * dt;
+        // 少量弱弹幕
+        this.attackTimer += dt;
+        if (this.attackTimer >= 2.5 && projectiles) {
+          this.attackTimer = 0;
+          const a = Math.random() * Math.PI * 2;
+          projectiles.push({
+            x: this.x, y: this.y,
+            vx: Math.cos(a) * 100, vy: Math.sin(a) * 100,
+            radius: 3, damage: Math.floor(this.damage * 0.2),
+            lifetime: 99, color: '#88ccaa',
+            _enemyProjectile: true,
+            update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.lifetime -= dt; },
+            get isDead() { return this.lifetime <= 0; },
+          });
+        }
+
+        if (this._phaseTimer >= 4) {
+          this._phase = 'pump';
+          this._phaseTimer = 0;
+          playPumpGrow();
+        }
+      }
+
+    } else if (this.typeKey === 'dogeCoin') {
+      // Doge Coin — 弹跳狗币 + meme 攻击
+      if (!this._vx) {
+        const a = Math.random() * Math.PI * 2;
+        this._vx = Math.cos(a) * this.speed;
+        this._vy = Math.sin(a) * this.speed;
+        this._memeTimer = 0;
+        this._memeText = '';
+        this._memeTextTimer = 0;
+        this._fireTimer = 0;
+      }
+
+      const hpRatio = this.hp / this.maxHp;
+
+      // 弹跳移动（血量越低越快）
+      const spdMult = 1 + (1 - hpRatio) * 0.5;
+      this.x += this._vx * spdMult * dt;
+      this.y += this._vy * spdMult * dt;
+      if (this.x < playerX - CANVAS_WIDTH/2 + this.radius) { this.x = playerX - CANVAS_WIDTH/2 + this.radius; this._vx *= -1; }
+      if (this.x > playerX + CANVAS_WIDTH/2 - this.radius) { this.x = playerX + CANVAS_WIDTH/2 - this.radius; this._vx *= -1; }
+      if (this.y < playerY - CANVAS_HEIGHT/2 + this.radius) { this.y = playerY - CANVAS_HEIGHT/2 + this.radius; this._vy *= -1; }
+      if (this.y > playerY + CANVAS_HEIGHT/2 - this.radius) { this.y = playerY + CANVAS_HEIGHT/2 - this.radius; this._vy *= -1; }
+
+      // 持续射击追踪弹（狗币样式）
+      this._fireTimer += dt;
+      const fireCD = hpRatio > 0.5 ? 0.6 : (hpRatio > 0.25 ? 0.45 : 0.3);
+      if (this._fireTimer >= fireCD && projectiles) {
+        this._fireTimer = 0;
+        const a = Math.atan2(playerY - this.y, playerX - this.x);
+        projectiles.push({
+          x: this.x, y: this.y, vx: Math.cos(a) * 180, vy: Math.sin(a) * 180,
+          radius: 7, damage: Math.floor(this.damage * 0.35),
+          lifetime: 99, _enemyProjectile: true, _isDogeCoin: true,
+          update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.lifetime -= dt; },
+          get isDead() { return this.lifetime <= 0; },
+        });
+      }
+
+      // Meme 文字计时器
+      if (this._memeTextTimer > 0) {
+        this._memeTextTimer -= dt;
+      } else {
+        this._memeText = '';
+      }
+
+      // Meme 特殊攻击
+      this._memeTimer += dt;
+      const memeCD = hpRatio > 0.5 ? 2.5 : (hpRatio > 0.25 ? 2.0 : 1.5);
+
+      if (this._memeTimer >= memeCD && projectiles) {
+        this._memeTimer = 0;
+        const roll = Math.random();
+        if (roll < 0.3) {
+          // wow — 环形狗币弹幕
+          this._memeText = 'wow';
+          this._memeTextTimer = 0.8;
+          const count = 10;
+          for (let i = 0; i < count; i++) {
+            const a = (i / count) * Math.PI * 2;
+            projectiles.push({
+              x: this.x, y: this.y, vx: Math.cos(a) * 160, vy: Math.sin(a) * 160,
+              radius: 8, damage: Math.floor(this.damage * 0.45),
+              lifetime: 99, _enemyProjectile: true, _isDogeCoin: true,
+              update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.lifetime -= dt; },
+              get isDead() { return this.lifetime <= 0; },
+            });
+          }
+        } else if (roll < 0.55) {
+          // much damage — 重型狗币追踪弹
+          this._memeText = 'much damage';
+          this._memeTextTimer = 0.8;
+          const a = Math.atan2(playerY - this.y, playerX - this.x);
+          projectiles.push({
+            x: this.x, y: this.y, vx: Math.cos(a) * 300, vy: Math.sin(a) * 300,
+            radius: 14, damage: Math.floor(this.damage * 1.0),
+            lifetime: 99, _enemyProjectile: true, _isDogeCoin: true,
+            update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.lifetime -= dt; },
+            get isDead() { return this.lifetime <= 0; },
+          });
+        } else if (roll < 0.75) {
+          // very fast — 加速弹跳
+          this._memeText = 'very fast';
+          this._memeTextTimer = 0.8;
+          const a = Math.atan2(playerY - this.y, playerX - this.x);
+          const spd = this.speed * 3;
+          this._vx = Math.cos(a) * spd;
+          this._vy = Math.sin(a) * spd;
+        } else {
+          // such danger — 扩散热浪环
+          this._memeText = 'such danger';
+          this._memeTextTimer = 1.0;
+          if (!this._heatWaves) this._heatWaves = [];
+          this._heatWaves.push({ radius: 15, maxRadius: 400, life: 1.3, maxLife: 1.3, damage: this.damage * 0.7, _color: "#c2a633" });
+        }
+      }
+      // 热浪生命周期
+      if (this._heatWaves) {
+        for (const w of this._heatWaves) w.life -= dt;
+        this._heatWaves = this._heatWaves.filter(w => w.life > 0);
+      }
 
     } else {
       // 默认：向玩家移动

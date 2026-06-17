@@ -452,6 +452,50 @@ export function playKernelCrash() {
   noise.stop(now + 0.35);
 }
 
+// ---- Pump & Dump Boss 音效 ----
+
+export function playPumpGrow() {
+  const c = ctx();
+  const now = c.currentTime;
+  const osc = c.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(80, now);
+  osc.frequency.linearRampToValueAtTime(300, now + 0.5);
+  const g = gainEnv(c, 0.05, 0.5, 0.12, now);
+  osc.connect(g);
+  g.connect(out());
+  osc.start(now);
+  osc.stop(now + 0.55);
+}
+
+export function playPumpExplode() {
+  const c = ctx();
+  const now = c.currentTime;
+  const osc = c.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(300, now);
+  osc.frequency.linearRampToValueAtTime(30, now + 0.6);
+  const lfo = c.createOscillator();
+  lfo.frequency.value = 20;
+  const lfoGain = c.createGain();
+  lfoGain.gain.value = 80;
+  lfo.connect(lfoGain);
+  lfoGain.connect(osc.frequency);
+  const g = gainEnv(c, 0.01, 0.6, 0.25, now);
+  osc.connect(g);
+  g.connect(out());
+  const noise = noiseNode(c, 0.3);
+  const noiseG = gainEnv(c, 0.005, 0.3, 0.2, now);
+  noise.connect(noiseG);
+  noiseG.connect(out());
+  lfo.start(now);
+  lfo.stop(now + 0.6);
+  osc.start(now);
+  osc.stop(now + 0.6);
+  noise.start(now);
+  noise.stop(now + 0.4);
+}
+
 // ---- NFT 大招音效 ----
 
 export function playUltimateCharge() {

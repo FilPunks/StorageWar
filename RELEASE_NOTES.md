@@ -2,6 +2,40 @@
 
 ---
 
+## version 1.2 (2026-06-17)
+
+**中文**
+
+- 新增 Boss 5：Pump & Dump（膨胀崩盘），13:30 出场，Crypto 代币周期主题
+  - 三阶段循环：Pump（膨胀变大 + 远程吸取 XP 币 + 50% 减伤）→ 红色波纹预警 → Dump（全屏冲击波 + 红色 XP 弹片）→ Crash（缩小逃跑，4s 输出窗口）
+  - 吸取 XP 币越多，Dump 伤害越高
+  - 像素金币精灵 + 字母 P/D 随币体摇动
+- 新增 Boss 6：Doge Coin（狗狗币），16:00 出场，Doge 表情包主题
+  - 弹跳式移动 + 持续发射 Dogecoin 弹幕（SVG 币面，金色辉光 + 细边框 + 高光点）
+  - Meme 文字特殊攻击：wow（环形弹幕）/ much damage（高速重击弹）/ very fast（冲锋加速）/ such danger（金色热浪环，半径 400px）
+  - 漫画气泡（圆角矩形 + 三角尾巴，随机偏移位置）
+  - Boss 精灵使用真实图片，自动去白底
+  - 随血量降低攻击频率递增
+- Boss 头顶不再显示血条（仅保留 HUD 顶部 Boss 血条）
+- Pump & Dump 和 Doge Coin 弹幕均取消射程限制
+
+**English**
+
+- New Boss 5: Pump & Dump (13:30), crypto token cycle themed
+  - Three-phase cycle: Pump (inflates + vacuums XP coins + 50% DR) → red ripple warning → Dump (screen-wide shockwave + red XP shrapnel) → Crash (shrinks + flees, 4s vulnerability window)
+  - More XP absorbed = stronger Dump damage
+  - Pixel gold coin sprite + letter P/D wobbling with coin
+- New Boss 6: Doge Coin (16:00), Doge meme themed
+  - Bouncing movement + continuous Dogecoin projectile fire (SVG coin face, golden glow + border + highlight)
+  - Meme text specials: wow (ring burst) / much damage (high-speed heavy shot) / very fast (speed charge) / such danger (golden heat wave ring, 400px radius)
+  - Comic speech bubbles (rounded rectangle + triangle tail, random offset)
+  - Real photo sprite with auto white-background removal
+  - Attack frequency scales with remaining HP
+- Boss overhead HP bars removed (HUD top-center boss HP bars remain)
+- Pump & Dump and Doge Coin projectiles: unlimited range
+
+---
+
 ## version 1.1 (2026-06-15)
 
 **中文**

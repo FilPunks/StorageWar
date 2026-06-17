@@ -13,6 +13,33 @@ playerSprite.src = './205.png';
 let spriteLoaded = false;
 playerSprite.onload = () => { spriteLoaded = true; };
 
+// Doge boss 精灵图（加载后去白底）
+let dogeSprite = null;
+let dogeSpriteLoaded = false;
+(function() {
+  const img = new Image();
+  img.src = './doge.jpg';
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = img.width;
+    c.height = img.height;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const data = ctx.getImageData(0, 0, c.width, c.height);
+    const px = data.data;
+    for (let i = 0; i < px.length; i += 4) {
+      const r = px[i], g = px[i+1], b = px[i+2];
+      // 白色/近白色像素变透明
+      if (r > 220 && g > 220 && b > 220) {
+        px[i+3] = 0;
+      }
+    }
+    ctx.putImageData(data, 0, 0);
+    dogeSprite = c;
+    dogeSpriteLoaded = true;
+  };
+})();
+
 export function setPlayerSprite(img) {
   playerSprite = img;
   spriteLoaded = true;
@@ -24,6 +51,24 @@ export function resetPlayerSprite() {
   spriteLoaded = false;
   playerSprite.onload = () => { spriteLoaded = true; };
 }
+
+// ========== Dogecoin 弹幕精灵图 ==========
+
+const dogeCoinProjSource = new Image();
+dogeCoinProjSource.src = './dogecoin.svg';
+let dogeCoinProjSprite = null;
+let dogeCoinProjLoaded = false;
+dogeCoinProjSource.onload = () => {
+  const S = 28;
+  const canvas = document.createElement('canvas');
+  canvas.width = S;
+  canvas.height = S;
+  const c = canvas.getContext('2d');
+  c.imageSmoothingEnabled = true;
+  c.drawImage(dogeCoinProjSource, 0, 0, S, S);
+  dogeCoinProjSprite = canvas;
+  dogeCoinProjLoaded = true;
+};
 
 // ========== XP Coin 精灵图加载（Filecoin 标志） ==========
 
@@ -930,7 +975,117 @@ function generateEnemySprite(typeKey, radius) {
       outlineShape(c, d, darken(fileClr, 60), BG);
       break;
     }
-  }
+    case 'pumpAndDump': {
+      const greenClr = '#22cc66', darkGreen = '#118844', lightGreen = '#44ee88';
+      const cx = Math.floor(d / 2), cy = Math.floor(d / 2);
+      const R = Math.floor(d / 2) - 2;
+      // 绿色圆形代币
+      for (let row = 0; row < d; row++) {
+        for (let col = 0; col < d; col++) {
+          const dx = col - cx, dy = row - cy;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist <= R) {
+            pset(c, d, col, row, dist > R * 0.85 ? darkGreen : greenClr);
+          }
+        }
+      }
+      // $ 符号（简化竖线 + S 曲线）
+      const topY = Math.floor(cy - R * 0.4), botY = Math.floor(cy + R * 0.4);
+      for (let row = topY; row <= botY; row++) {
+        pset(c, d, cx, row, lightGreen);
+      }
+      // 顶部横线
+      for (let col = cx - Math.floor(R * 0.3); col <= cx + Math.floor(R * 0.3); col++) {
+        pset(c, d, col, topY, lightGreen);
+      }
+      // 中间横线（S 形转折）
+      const midY = Math.floor(cy);
+      for (let col = cx - Math.floor(R * 0.25); col <= cx + Math.floor(R * 0.25); col++) {
+        pset(c, d, col, midY, lightGreen);
+      }
+      // 底部横线
+      for (let col = cx - Math.floor(R * 0.3); col <= cx + Math.floor(R * 0.3); col++) {
+        pset(c, d, col, botY, lightGreen);
+      }
+      outlineShape(c, d, darken(greenClr, 40), BG);
+      break;
+    }
+    case 'dogeCoin': {
+      const furClr = '#c8963a', darkFur = '#a07028', muzzleClr = '#f5edd0';
+      const earClr = '#8b5e2a', noseClr = '#1a1a1a', eyeClr = '#1a1a1a';
+      const cx = Math.floor(d / 2), cy = Math.floor(d / 2);
+      const R = Math.floor(d / 2) - 1;
+      // 脸部椭圆
+      const faceCY = Math.floor(cy - R * 0.02);
+      const faceRX = Math.floor(R * 0.72), faceRY = Math.floor(R * 0.75);
+      for (let row = 0; row < d; row++) {
+        for (let col = 0; col < d; col++) {
+          const ex = (col - cx) / faceRX, ey = (row - faceCY) / faceRY;
+          if (ex * ex + ey * ey <= 1.0) {
+            pset(c, d, col, row, ex * ex + ey * ey > 0.65 ? darkFur : furClr);
+          }
+        }
+      }
+      // 白色嘴部（宽大，占下半脸）
+      const mTop = Math.floor(faceCY + R * 0.08), mBot = Math.floor(faceCY + R * 0.62);
+      for (let row = mTop; row <= mBot; row++) {
+        const progress = (row - mTop) / (mBot - mTop);
+        let mW = progress < 0.4 ? Math.floor(R * 0.12 + progress * R * 0.5) : Math.floor(R * 0.32 - (progress - 0.4) * R * 0.25);
+        for (let col = cx - mW; col <= cx + mW; col++) {
+          if (row >= 0 && row < d && col >= 0 && col < d) {
+            const ex = (col - cx) / faceRX, ey = (row - faceCY) / faceRY;
+            if (ex * ex + ey * ey < 0.95) pset(c, d, col, row, muzzleClr);
+          }
+        }
+      }
+      // 黑鼻子
+      const noseY = Math.floor(mTop + R * 0.05);
+      for (let row = noseY - 3; row <= noseY + 2; row++)
+        for (let col = cx - 4; col <= cx + 4; col++)
+          if (row >= 0 && row < d && col >= 0 && col < d) pset(c, d, col, row, noseClr);
+      pset(c, d, cx - 2, noseY - 1, '#444');
+      // 眼睛（Doge经典侧目：大体黑瞳 + 白点高光 + 上方眉毛线）
+      const eyeY = Math.floor(faceCY - R * 0.2);
+      for (const side of [-1, 1]) {
+        const ex = cx + side * Math.floor(R * 0.24);
+        // 黑眼珠
+        for (let row = eyeY - 2; row <= eyeY + 2; row++)
+          for (let col = ex - 2; col <= ex + 2; col++)
+            if (row >= 0 && row < d && col >= 0 && col < d) pset(c, d, col, row, eyeClr);
+        // 白点高光（偏内上）
+        pset(c, d, ex + (side < 0 ? 1 : -1), eyeY - 1, '#ffffff');
+        // 眉毛（上扬线）
+        const browY = eyeY - 4;
+        for (let col = ex - 3; col <= ex + 1; col++) {
+          const bRow = browY - Math.abs(col - ex);
+          if (bRow >= 0 && bRow < d && col >= 0 && col < d) pset(c, d, col, bRow, darkFur);
+        }
+      }
+      // 耳朵（三角形外侧）
+      for (const side of [-1, 1]) {
+        const earBX = cx + side * Math.floor(R * 0.30);
+        const earBY = Math.floor(faceCY - R * 0.60);
+        const earH = Math.floor(R * 0.48), earW = Math.floor(R * 0.22);
+        for (let row = earBY; row <= earBY + earH; row++) {
+          const progress = (row - earBY) / earH;
+          const w = Math.floor(earW * (1 - progress * 0.55));
+          const slant = Math.floor(side * progress * earW * 0.5);
+          for (let col = earBX - w + slant; col <= earBX + w + slant; col++) {
+            if (row >= 0 && row < d && col >= 0 && col < d)
+              pset(c, d, col, row, progress < 0.45 ? darkFur : earClr);
+          }
+        }
+      }
+      // 小嘴
+      const mouthY = Math.floor(noseY + R * 0.22);
+      for (let col = cx - Math.floor(R * 0.12); col <= cx + Math.floor(R * 0.12); col++) {
+        const dy = Math.floor(Math.abs(col - cx) * 0.2);
+        if (mouthY + dy >= 0 && mouthY + dy < d) pset(c, d, col, mouthY + dy, noseClr);
+      }
+      outlineShape(c, d, darken('#a07028', 55), BG);
+      break;
+    }
+	  }
 
   enemySpriteCache[typeKey] = canvas;
 }
@@ -960,8 +1115,11 @@ function drawEnemy(ctx, enemy) {
   const displaySize = radius * 2;
   ctx.imageSmoothingEnabled = false;
 
-  // Virus Spread / Corrupted 绿色覆盖：Corrupted 用马赛克效果
-  if (enemy.virusTimer > 0 || enemy._corrupted) {
+  // Doge Coin 使用真实图片（无裁剪）
+  if (typeKey === 'dogeCoin' && dogeSpriteLoaded) {
+    const imgSize = radius * 2.4;
+    ctx.drawImage(dogeSprite, -imgSize/2, -imgSize/2, imgSize, imgSize);
+  } else if (enemy.virusTimer > 0 || enemy._corrupted) {
     ctx.globalAlpha = 1;
     ctx.drawImage(sprite, -displaySize / 2, -displaySize / 2, displaySize, displaySize);
     ctx.globalCompositeOperation = 'source-atop';
@@ -1048,10 +1206,30 @@ function drawEnemy(ctx, enemy) {
     }
   }
 
+  // Pump & Dump — 像素 P/D 字母（随币体摇动）
+  if (enemy.typeKey === 'pumpAndDump') {
+    const letter = enemy._phase === 'crash' ? 'D' : 'P';
+    const pix = Math.max(2, Math.floor(displaySize / 18));
+    const ox = -pix * 2;
+    const oy = -pix * 3;
+    ctx.fillStyle = '#ffffff';
+    if (letter === 'P') {
+      const pMap = ['11110','10001','10001','11110','10000','10000','10000'];
+      for (let r = 0; r < pMap.length; r++)
+        for (let c = 0; c < 5; c++)
+          if (pMap[r][c] === '1') ctx.fillRect(ox + c * pix, oy + r * pix, pix, pix);
+    } else {
+      const dMap = ['11100','10010','10001','10001','10001','10010','11100'];
+      for (let r = 0; r < dMap.length; r++)
+        for (let c = 0; c < 5; c++)
+          if (dMap[r][c] === '1') ctx.fillRect(ox + c * pix, oy + r * pix, pix, pix);
+    }
+  }
+
   ctx.restore();
 
-  // HP 条（仅在受伤时显示）
-  if (hp < maxHp) {
+  // Boss 不展示头顶血条
+  if (!enemy.isBoss && hp < maxHp) {
     const barW = radius * 2;
     const barH = 3;
     const barY = y - radius - 6;
@@ -1124,6 +1302,80 @@ export function drawProjectiles(ctx, projectiles) {
         ctx.fillRect(-pw / 2 - s * 0.4, -ph / 2 - s * 0.4, pw + s * 0.8, ph + s * 0.8);
 
         ctx.restore();
+        continue;
+      }
+
+      // Pump & Dump 崩盘冲击波
+      if (p._isDumpRing) {
+        const alpha = p.lifetime / (p.maxLife || 0.7);
+        ctx.strokeStyle = `rgba(255, 50, 50, ${alpha * 0.7})`;
+        ctx.lineWidth = 6 * alpha;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = `rgba(255, 100, 50, ${alpha * 0.3})`;
+        ctx.lineWidth = 14 * alpha;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        continue;
+      }
+
+      // Doge Coin 狗币弹幕（SVG 币样式）
+      if (p._isDogeCoin) {
+        const r = p.radius;
+        const d = r * 2;
+        // 发光外圈
+        ctx.fillStyle = 'rgba(194, 166, 51, 0.25)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r * 1.7, 0, Math.PI * 2);
+        ctx.fill();
+        if (dogeCoinProjLoaded) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(dogeCoinProjSprite, p.x - d/2, p.y - d/2, d, d);
+          ctx.restore();
+          ctx.strokeStyle = '#b08020';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = '#c2a633';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // 高光点
+        ctx.fillStyle = 'rgba(255, 240, 200, 0.5)';
+        ctx.beginPath();
+        ctx.arc(p.x - r*0.2, p.y - r*0.2, r*0.35, 0, Math.PI * 2);
+        ctx.fill();
+        continue;
+      }
+
+      // Pump & Dump 红色 XP 弹片
+      if (p._isRedXp) {
+        const r = p.radius;
+        ctx.fillStyle = 'rgba(255, 50, 50, 0.25)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r * 1.7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ff3333';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ff6666';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255, 200, 200, 0.6)';
+        ctx.beginPath();
+        ctx.arc(p.x - r * 0.2, p.y - r * 0.2, r * 0.35, 0, Math.PI * 2);
+        ctx.fill();
         continue;
       }
 
@@ -1749,19 +2001,23 @@ export function drawBossEffects(ctx, enemies) {
       continue; // 跳过通用 Boss 渲染（Kernel Panic 已自行处理）
     }
 
-    // CPU 热浪
+    // CPU / DogeCoin 热浪
     if (enemy._heatWaves && enemy._heatWaves.length > 0) {
       for (const w of enemy._heatWaves) {
         const alpha = w.life / w.maxLife;
         const progress = 1 - alpha;
-        const r = 10 + progress * 140;
-        ctx.strokeStyle = `rgba(255, 107, 53, ${alpha * 0.7})`;
-        ctx.lineWidth = 3 * alpha;
+        const maxR = w.maxRadius || 140;
+        const r = 10 + progress * maxR;
+        const isGolden = w._color === '#c2a633';
+        const c1 = isGolden ? '194, 166, 51' : '255, 107, 53';
+        const c2 = isGolden ? '230, 200, 80' : '255, 153, 51';
+        ctx.strokeStyle = 'rgba(' + c1 + ', ' + (alpha * 0.7) + ')';
+        ctx.lineWidth = 4 * alpha;
         ctx.beginPath();
         ctx.arc(enemy.x, enemy.y, r, 0, Math.PI * 2);
         ctx.stroke();
-        ctx.strokeStyle = `rgba(255, 153, 51, ${alpha * 0.35})`;
-        ctx.lineWidth = 8 * alpha;
+        ctx.strokeStyle = 'rgba(' + c2 + ', ' + (alpha * 0.4) + ')';
+        ctx.lineWidth = 10 * alpha;
         ctx.beginPath();
         ctx.arc(enemy.x, enemy.y, r + 10, 0, Math.PI * 2);
         ctx.stroke();
@@ -1792,6 +2048,81 @@ export function drawBossEffects(ctx, enemies) {
         ctx.arc(ft.x, ft.y, ft.radius * (ft.life / ft.maxLife), 0, Math.PI * 2);
         ctx.fill();
       }
+    }
+
+    // Pump & Dump — 膨胀/低谷视觉效果
+    if (enemy.typeKey === 'pumpAndDump') {
+      if (enemy._phase === 'pump') {
+        // 膨胀光环
+        const progress = enemy.radius / 110;
+        const alpha = 0.15 + progress * 0.25;
+        ctx.strokeStyle = `rgba(34, 204, 102, ${alpha})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(enemy.x, enemy.y, enemy.radius + 8, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (enemy._phase === 'peak') {
+        // 红色预警波纹
+        const rippleCount = 3;
+        for (let i = 0; i < rippleCount; i++) {
+          const ripplePhase = (Date.now() / 150 + i * 0.33) % 1;
+          const rippleR = enemy.radius + 10 + ripplePhase * 60;
+          const rippleAlpha = (1 - ripplePhase) * 0.5;
+          ctx.strokeStyle = `rgba(255, 30, 30, ${rippleAlpha})`;
+          ctx.lineWidth = 3 * (1 - ripplePhase);
+          ctx.beginPath();
+          ctx.arc(enemy.x, enemy.y, rippleR, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        // 本体闪烁
+        const flash = 0.4 + 0.6 * Math.sin(Date.now() / 50);
+        ctx.fillStyle = `rgba(255, 50, 50, ${flash * 0.25})`;
+        ctx.beginPath();
+        ctx.arc(enemy.x, enemy.y, enemy.radius + 15, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    // Doge Coin — 漫画气泡（圆角矩形 + 随机偏移）
+    if (enemy.typeKey === 'dogeCoin' && enemy._memeText) {
+      if (!enemy._bubbleOffset) {
+        enemy._bubbleOffset = { dx: (Math.random() - 0.5) * 60, dy: -20 - Math.random() * 30 };
+      }
+      const tx = enemy.x + enemy._bubbleOffset.dx;
+      const ty = enemy.y - enemy.radius + enemy._bubbleOffset.dy;
+      ctx.font = 'bold 14px "Comic Sans MS", cursive, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const tw = ctx.measureText(enemy._memeText).width + 24;
+      const th = 26;
+      const rx = 8;
+      // 圆角矩形
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#333333';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(tx - tw/2 + rx, ty - th/2);
+      ctx.lineTo(tx + tw/2 - rx, ty - th/2);
+      ctx.arcTo(tx + tw/2, ty - th/2, tx + tw/2, ty - th/2 + rx, rx);
+      ctx.lineTo(tx + tw/2, ty + th/2 - rx);
+      ctx.arcTo(tx + tw/2, ty + th/2, tx + tw/2 - rx, ty + th/2, rx);
+      ctx.lineTo(tx - tw/2 + rx, ty + th/2);
+      ctx.arcTo(tx - tw/2, ty + th/2, tx - tw/2, ty + th/2 - rx, rx);
+      ctx.lineTo(tx - tw/2, ty - th/2 + rx);
+      ctx.arcTo(tx - tw/2, ty - th/2, tx - tw/2 + rx, ty - th/2, rx);
+      ctx.fill();
+      ctx.stroke();
+      // 尾巴指向boss
+      const tailX = enemy.x, tailY = enemy.y - enemy.radius - 4;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(tailX - 7, ty + th/2 - 1);
+      ctx.lineTo(tailX, tailY);
+      ctx.lineTo(tailX + 7, ty + th/2 - 1);
+      ctx.fill();
+      ctx.stroke();
+      // 文字
+      ctx.fillStyle = '#333333';
+      ctx.fillText(enemy._memeText, tx, ty);
     }
   }
 }

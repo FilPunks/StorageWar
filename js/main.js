@@ -8,7 +8,7 @@ import {
   drawXpCoins, drawParticles, drawHUD, drawPlayerEffects, drawBossEffects, drawChargeEffect,
 } from './renderer.js';
 import { EnemySpawner } from './systems.js';
-import { distance, circleCollision } from './utils.js';
+import { distance, circleCollision, normalize } from './utils.js';
 import {
   rollSkills, applySkill, initPlayerWeapons, updateAllWeapons, postUpdateWeapons, setWeaponCtxEnemies,
   RARITY_COLORS,
@@ -492,6 +492,11 @@ class Game {
           isCrit = true;
         }
 
+        // Pump & Dump — Pump 期 50% 减伤
+        if (enemy.typeKey === 'pumpAndDump' && enemy._phase === 'pump') {
+          dmg = Math.floor(dmg * 0.5);
+        }
+
         const killed = enemy.takeDamage(dmg);
         p.hitEnemies.add(enemy);
         p.pierce--;
@@ -669,6 +674,8 @@ class Game {
       { key: 'rootkit', time: 240, name: t('enemy.rootkit') },
       { key: 'gpu', time: 450, name: t('enemy.gpu') },
       { key: 'kernelPanic', time: 660, name: t('enemy.kernelPanic') },
+      { key: 'pumpAndDump', time: 810, name: t('enemy.pumpAndDump') },
+      { key: 'dogeCoin', time: 960, name: t('enemy.dogeCoin') },
     ];
     const warningDuration = 3; // 预警持续 3 秒
     for (const b of bosses) {
@@ -742,6 +749,23 @@ class Game {
     let levelUps = 0;
     for (const coin of this.xpCoins) {
       coin.update(dt);
+      // Pump & Dump — XP 币吸取
+      for (const enemy of this.enemies) {
+        if (enemy._xpSuction) {
+          const edist = distance(coin.x, coin.y, enemy.x, enemy.y);
+          if (edist < enemy._xpSuctionRadius) {
+            const pull = normalize(enemy.x - coin.x, enemy.y - coin.y);
+            const force = (1 - edist / enemy._xpSuctionRadius) * 500 * dt;
+            coin.x += pull.x * force;
+            coin.y += pull.y * force;
+            if (edist < enemy.radius + 50) {
+              if (this.player.addXp(coin.xpValue)) levelUps++;
+              coin.lifetime = -1;
+              enemy._pumpMeter = (enemy._pumpMeter || 0) + 1;
+            }
+          }
+        }
+      }
       const dist = distance(coin.x, coin.y, this.player.x, this.player.y);
       if (dist < this.player.pickupRange + 40) {
         coin.beingMagnetized = true;

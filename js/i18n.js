@@ -74,6 +74,8 @@ const dict = {
   'enemy.kernelPanic':   { zh: '内核恐慌',            en: 'Kernel Panic' },
   'enemy.childProcess':  { zh: '子进程',              en: 'Child Process' },
   'enemy.corrupt':       { zh: '损坏文件',            en: 'Corrupted File' },
+  'enemy.pumpAndDump':     { zh: '膨胀崩盘',            en: 'Pump & Dump' },
+  'enemy.dogeCoin':        { zh: '狗狗币',              en: 'Doge Coin' },
 
   // --- 主动武器 ---
   'skill.sectorSweep.name':        { zh: '扇区清扫',         en: 'Sector Sweep' },

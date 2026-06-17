@@ -141,6 +141,51 @@ export function spawnScreenNukeParticles(particles, x, y) {
   }
 }
 
+// ---- Pump & Dump Boss 粒子 ----
+
+export function spawnPumpExplodeParticles(particles, x, y) {
+  const colors = ['#22cc66', '#ff3333', '#ffd700', '#ffffff'];
+  const count = 30;
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = randomBetween(80, 350);
+    particles.push(new Particle(x, y,
+      Math.cos(angle) * speed,
+      Math.sin(angle) * speed,
+      colors[Math.floor(Math.random() * colors.length)],
+      randomBetween(2, 8),
+      randomBetween(0.3, 0.9)));
+  }
+}
+
+// ---- Satoshi Boss 粒子 ----
+
+export function spawnSatoshiVanishParticles(particles, x, y) {
+  for (let i = 0; i < 12; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = randomBetween(20, 80);
+    particles.push(new Particle(x, y,
+      Math.cos(angle) * speed,
+      Math.sin(angle) * speed,
+      '#ff9900',
+      randomBetween(1, 3),
+      randomBetween(0.2, 0.5)));
+  }
+}
+
+export function spawnSatoshiReappearParticles(particles, x, y) {
+  for (let i = 0; i < 16; i++) {
+    const angle = (i / 16) * Math.PI * 2;
+    const speed = randomBetween(60, 200);
+    particles.push(new Particle(x, y,
+      Math.cos(angle) * speed,
+      Math.sin(angle) * speed,
+      i % 2 === 0 ? '#ff9900' : '#ffffff',
+      randomBetween(2, 6),
+      randomBetween(0.3, 0.7)));
+  }
+}
+
 // ---- 清理 ----
 
 export function updateParticles(particles, dt, maxParticles = 300) {
