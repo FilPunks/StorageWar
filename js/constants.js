@@ -232,7 +232,7 @@ export const XP = {
 // --- 敌人生成器 ---
 export const SPAWNER = {
   initialInterval: 0.75,  // 初始生成间隔(秒)
-  minInterval: 0.12,       // 最小生成间隔
+  minInterval: 0.11,       // 最小生成间隔
   intervalDecay: 0.0023,  // 每秒减少的间隔
   maxEnemies: 350,        // 场上最大敌人数
   spawnMargin: 80,        // 屏幕外生成距离
