@@ -2,6 +2,24 @@
 
 ---
 
+## version 1.3 (2026-06-18)
+
+**中文**
+
+- 增强 Q 大招「GC Sweep」清屏音效：新增 4 层叠加爆炸音效（低频轰鸣 + 噪声冲击 + LFO 颤音 + 高频碎裂），替代原先单次敌人死亡音效
+- 增强 Q 大招清屏视觉效果：每敌人死亡粒子数 12→20，震屏强度 8→14 持续 0.4→0.55s，新增屏幕闪白效果
+- 修复屏幕闪白渲染缺失：`screenFX.flashAlpha` 已正确渲染到屏幕空间（之前仅写入从未绘制）
+- 修复 `startGame()` 中 `_ultimateCharging` / `_chargeStart` 未重置，防止死后重开时异常触发大招
+
+**English**
+
+- Enhanced Q ultimate "GC Sweep" sound: new 4-layer explosion SFX (deep rumble + noise burst + LFO tremolo + high-frequency shatter), replacing the single enemy death sound
+- Enhanced Q ultimate visuals: death particles per enemy 12→20, screen shake intensity 8→14 duration 0.4→0.55s, added screen white flash on activation
+- Fixed screen flash rendering: `screenFX.flashAlpha` now correctly draws to screen space (was written but never rendered before)
+- Fixed `_ultimateCharging` / `_chargeStart` not being reset in `startGame()`, preventing accidental ultimate trigger after death-restart
+
+---
+
 ## version 1.2 (2026-06-17)
 
 **中文**

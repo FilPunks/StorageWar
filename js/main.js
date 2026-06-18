@@ -16,13 +16,13 @@ import {
 import { UpgradeUI } from './ui.js';
 import {
   updateParticles, spawnDeathParticles, spawnLevelUpParticles,
-  screenFX, updateScreenFX, getShakeOffset, addScreenShake,
+  screenFX, updateScreenFX, getShakeOffset, addScreenShake, addScreenFlash,
 } from './particles.js';
 import { t, getLanguage, setLanguage } from './i18n.js';
 import { initAudio, isMuted, toggleMute,
   playEnemyDeath, playBossDeath, playXpPickup,
   playBossWarning, playPlayerDamage, playPingPulse,
-  playKernelCrash, playUltimateCharge,
+  playKernelCrash, playUltimateCharge, playUltimateActivate,
 } from './audio.js';
 import {
   connectWallet, disconnectWallet, isConnected, getConnectedAddress,
@@ -221,7 +221,8 @@ class Game {
     for (const enemy of this.enemies) {
       if (!enemy.isBoss) {
         this.xpCoins.push(new XpCoin(enemy.x, enemy.y, enemy.xpValue));
-        spawnDeathParticles(this.particles, enemy.x, enemy.y, enemy.color || '#ff6348', 12);
+        // 每个敌人 20 个死亡粒子（比普通死亡的 12 个更密集）
+        spawnDeathParticles(this.particles, enemy.x, enemy.y, enemy.color || '#ff6348', 20);
         count++;
       }
     }
@@ -229,8 +230,9 @@ class Game {
     this.enemies = this.enemies.filter(e => e.isBoss);
 
     if (count > 0) {
-      playEnemyDeath();
-      addScreenShake(8, 0.4);
+      playUltimateActivate();
+      addScreenShake(14, 0.55);
+      addScreenFlash(0.3, 0.25, '#ffffff');
       for (const coin of this.xpCoins) {
         if (coin.lifetime > 0) coin.beingMagnetized = true;
       }
@@ -817,6 +819,8 @@ class Game {
     this._bossWarnings = [];
     this._systemCrashDebuff = null;
     this.ultimateCooldown = 0;
+    this._ultimateCharging = false;
+    this._chargeStart = 0;
     initPlayerWeapons(this.player);
     screenFX.shakeIntensity = 0;
     screenFX.shakeDuration = 0;
@@ -903,6 +907,16 @@ class Game {
     drawBossEffects(ctx, this.enemies);
 
     ctx.restore();
+
+    // 屏幕闪白效果（大招、爆炸等触发）
+    if (screenFX.flashAlpha > 0) {
+      const c = screenFX.flashColor || '#ffffff';
+      const r = parseInt(c.slice(1, 3), 16);
+      const g = parseInt(c.slice(3, 5), 16);
+      const b = parseInt(c.slice(5, 7), 16);
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${screenFX.flashAlpha})`;
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    }
 
     drawHUD(ctx, this.gameTime, this.kills, this.player, this.enemies, this._bossWarnings, this._systemCrashDebuff, {
       showUltimate: hasNft(),

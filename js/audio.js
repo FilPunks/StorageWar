@@ -529,3 +529,57 @@ export function playUltimateCharge() {
   lfo.stop(now + 0.85);
   osc.stop(now + 0.85);
 }
+
+// ---- NFT 大招激活音效（GC Sweep 清屏） ----
+
+export function playUltimateActivate() {
+  const c = ctx();
+  const now = c.currentTime;
+
+  // 层 1：深沉低频爆炸（sawtooth 从 150Hz 降到 25Hz）
+  const osc1 = c.createOscillator();
+  osc1.type = 'sawtooth';
+  osc1.frequency.setValueAtTime(150, now);
+  osc1.frequency.exponentialRampToValueAtTime(25, now + 0.7);
+  const g1 = gainEnv(c, 0.02, 0.7, 0.25, now);
+  osc1.connect(g1);
+  g1.connect(out());
+
+  // 层 2：白噪声冲击（经低通滤波衰减）
+  const noise = noiseNode(c, 0.6);
+  const noiseFilter = c.createBiquadFilter();
+  noiseFilter.type = 'lowpass';
+  noiseFilter.frequency.setValueAtTime(800, now);
+  noiseFilter.frequency.exponentialRampToValueAtTime(80, now + 0.5);
+  const noiseG = gainEnv(c, 0.01, 0.5, 0.18, now);
+  noise.connect(noiseFilter);
+  noiseFilter.connect(noiseG);
+  noiseG.connect(out());
+
+  // 层 3：LFO 颤音（给爆炸增加抖动感）
+  const lfo = c.createOscillator();
+  lfo.type = 'sine';
+  lfo.frequency.value = 12;
+  const lfoGain = c.createGain();
+  lfoGain.gain.value = 40;
+  lfo.connect(lfoGain);
+  lfoGain.connect(osc1.frequency);
+
+  // 层 4：高频叮当声（水晶碎裂感）
+  const osc2 = c.createOscillator();
+  osc2.type = 'square';
+  osc2.frequency.setValueAtTime(1200, now);
+  osc2.frequency.exponentialRampToValueAtTime(400, now + 0.25);
+  const g2 = gainEnv(c, 0.005, 0.25, 0.06, now);
+  osc2.connect(g2);
+  g2.connect(out());
+
+  lfo.start(now);
+  osc1.start(now);
+  osc2.start(now);
+  noise.start(now);
+  lfo.stop(now + 0.75);
+  osc1.stop(now + 0.75);
+  osc2.stop(now + 0.3);
+  noise.stop(now + 0.6);
+}
