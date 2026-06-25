@@ -546,13 +546,24 @@ export class Enemy {
       this._phaseTimer += dt;
 
       if (this._phase === 'pump') {
-        // 膨胀期：变大、变慢、远程吸取 XP 币
+        // 膨胀期：变大、追人、远程吸取 XP 币
         const pumpDuration = 6 + Math.random() * 2;
         const progress = Math.min(1, this._phaseTimer / pumpDuration);
-        this.radius = this._baseRadius + progress * 55;
-        this.speed = savedSpeed * (1.2 - progress * 0.4);
         this._xpSuction = true;
         this._xpSuctionRadius = 500;
+
+        // 半径：从 crash 小圆平滑过渡到基础大小，再膨胀
+        const transTime = 0.35;
+        if (this._phaseTimer < transTime) {
+          const t = this._phaseTimer / transTime; // 0→1
+          const fromCrash = this._baseRadius * (0.45 + t * 0.55);
+          this.radius = fromCrash + progress * 55 * (t < 0.5 ? t * 2 : 1);
+        } else {
+          this.radius = this._baseRadius + progress * 55;
+        }
+
+        // 速度：膨胀期高速追击（基础速度 35 vs 玩家 220，需大倍率）
+        this.speed = savedSpeed * (5.0 - progress * 1.0);
 
         const dir = normalize(playerX - this.x, playerY - this.y);
         this.x += dir.x * this.speed * dt;
@@ -587,19 +598,30 @@ export class Enemy {
           playPumpExplode();
           if (projectiles) {
             const ringDmg = Math.floor(this.damage * (1 + this._pumpMeter * 0.02));
-            // 大范围冲击波
+            // 外层冲击波（范围缩小）
             projectiles.push({
               x: this.x, y: this.y,
               vx: 0, vy: 0, radius: 0,
-              _expandSpeed: 500, _maxRadius: 500,
+              _expandSpeed: 300, _maxRadius: 300,
               damage: Math.min(ringDmg, this.damage * 3),
               lifetime: 1.0, maxLife: 1.0, color: '#ff3333',
-              _enemyProjectile: true, _isDumpRing: true,
+              _enemyProjectile: true, _isDumpRing: true, _isDumpInner: false,
+              update(dt) { this.radius += this._expandSpeed * dt; this.lifetime -= dt; },
+              get isDead() { return this.lifetime <= 0; },
+            });
+            // 内层亮环（更快、更亮、范围更小）
+            projectiles.push({
+              x: this.x, y: this.y,
+              vx: 0, vy: 0, radius: 0,
+              _expandSpeed: 400, _maxRadius: 180,
+              damage: Math.floor(ringDmg * 0.7),
+              lifetime: 0.6, maxLife: 0.6, color: '#ffaa00',
+              _enemyProjectile: true, _isDumpRing: true, _isDumpInner: true,
               update(dt) { this.radius += this._expandSpeed * dt; this.lifetime -= dt; },
               get isDead() { return this.lifetime <= 0; },
             });
             // 弹片：红色 XP（数量随 pumpMeter）
-            const shrapCount = 8 + Math.floor(this._pumpMeter * 0.5);
+            const shrapCount = 12 + Math.floor(this._pumpMeter * 0.8);
             for (let i = 0; i < shrapCount; i++) {
               const sa = (i / shrapCount) * Math.PI * 2 + Math.random() * 0.3;
               const ss = 180 + Math.random() * 250;
@@ -622,11 +644,21 @@ export class Enemy {
       } else if (this._phase === 'crash') {
         // 低谷期：小而快，逃跑
         this._xpSuction = false;
-        this.radius = this._baseRadius * 0.45;
         this.speed = savedSpeed * 1.5;
         const fleeDir = normalize(this.x - playerX, this.y - playerY);
         this.x += fleeDir.x * this.speed * dt;
         this.y += fleeDir.y * this.speed * dt;
+
+        // 半径：从膨胀大圆平滑缩小到 crash 小圆
+        const shrinkTime = 0.35;
+        if (this._phaseTimer < shrinkTime) {
+          const t = this._phaseTimer / shrinkTime; // 0→1
+          const bigR = this._baseRadius + 55;
+          const smallR = this._baseRadius * 0.45;
+          this.radius = bigR + (smallR - bigR) * t;
+        } else {
+          this.radius = this._baseRadius * 0.45;
+        }
         // 少量弱弹幕
         this.attackTimer += dt;
         if (this.attackTimer >= 2.5 && projectiles) {
@@ -643,10 +675,26 @@ export class Enemy {
           });
         }
 
-        if (this._phaseTimer >= 4) {
+        // 最后 3 秒发出预警信号
+        this._pumpWarning = this._phaseTimer >= 3;
+
+        if (this._phaseTimer >= 6) {
           this._phase = 'pump';
           this._phaseTimer = 0;
+          this._pumpWarning = false;
           playPumpGrow();
+          // crash→pump 视觉提示：绿色扩张环
+          if (projectiles) {
+            projectiles.push({
+              x: this.x, y: this.y,
+              vx: 0, vy: 0, radius: 0,
+              _expandSpeed: 300, _maxRadius: 160,
+              damage: 0, lifetime: 0.55, maxLife: 0.55, color: '#22cc66',
+              _enemyProjectile: true, _isDumpRing: true, _isDumpInner: true,
+              update(dt) { this.radius += this._expandSpeed * dt; this.lifetime -= dt; },
+              get isDead() { return this.lifetime <= 0; },
+            });
+          }
         }
       }
 

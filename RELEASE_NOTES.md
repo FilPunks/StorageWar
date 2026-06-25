@@ -2,6 +2,30 @@
 
 ---
 
+## version 1.5 (2026-06-25)
+
+**中文**
+
+- Pump & Dump Boss 大幅重做：
+  - **追击速度**：Pump 阶段高速追击玩家，速度从 `base * (5.0 - progress * 1.0)`，刚膨胀时约 5 倍速、完全膨胀仍保持 4 倍速
+  - **大小平滑过渡**：crash→pump 和 pump→crash 切换时各 0.35s 平滑过渡，不再瞬间大小切换
+  - **爆炸视觉增强**：Dump 冲击波改为双环结构（外层红环 + 内层亮橙环），扩张早期中心白色径向闪光，弹片数量增加（12+ 起），爆炸时触发震屏 + 白闪
+  - **爆炸范围缩小**：冲击波半径 500→300
+  - **Crash 时长**：调整为 6 秒
+  - **倒计时预警**：Crash 最后 3 秒 Boss 头顶显示白色倒数数字（3→2→1），提醒玩家即将切换回 Pump
+
+**English**
+
+- Pump & Dump Boss major overhaul:
+  - **Chase speed**: Pump phase now aggressively chases the player, speed formula `base * (5.0 - progress * 1.0)` — ~5x speed at pump start, ~4x even when fully inflated
+  - **Smooth size transitions**: 0.35s lerp between crash→pump and pump→crash phase changes, no more instant size snapping
+  - **Explosion visual upgrade**: Dump shockwave now dual-ring (outer red + inner bright orange), center white radial flash during early expansion, increased shrapnel count (12+ base), added screen shake + white flash on detonation
+  - **Smaller blast radius**: shockwave radius reduced 500→300
+  - **Crash duration**: set to 6 seconds
+  - **Countdown warning**: last 3 seconds of crash phase show white countdown numbers (3→2→1) above the boss, warning the player of the upcoming pump transition
+
+---
+
 ## version 1.4 (2026-06-25)
 
 **中文**

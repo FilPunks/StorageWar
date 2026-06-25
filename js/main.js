@@ -438,6 +438,15 @@ class Game {
     // 弹幕碰撞
     this.checkProjectileCollisions();
 
+    // Dump 爆炸震屏：冲击波刚生成时触发
+    for (const p of this.projectiles) {
+      if (p._isDumpRing && !p._isDumpInner && p.radius < 5 && p.radius > 0) {
+        addScreenShake(10, 0.4);
+        addScreenFlash(0.15, 0.12, '#ffffff');
+        break;
+      }
+    }
+
     // 清理弹幕
     this.projectiles = this.projectiles.filter(p => !p.isDead);
 

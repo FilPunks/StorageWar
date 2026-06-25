@@ -1224,6 +1224,20 @@ function drawEnemy(ctx, enemy) {
         for (let c = 0; c < 5; c++)
           if (dMap[r][c] === '1') ctx.fillRect(ox + c * pix, oy + r * pix, pix, pix);
     }
+
+    // Crash→Pump 倒数预警（最后 3 秒显示数字）
+    if (enemy._pumpWarning && enemy._phase === 'crash') {
+      const remaining = 6 - enemy._phaseTimer;
+      const count = Math.ceil(remaining);
+      if (count >= 1 && count <= 3) {
+        const shake = (remaining - Math.floor(remaining)) < 0.15 ? 3 : 0;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 22px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(count.toString(), (Math.random()-0.5)*shake, -radius - 10);
+      }
+    }
   }
 
   ctx.restore();
@@ -1308,16 +1322,59 @@ export function drawProjectiles(ctx, projectiles) {
       // Pump & Dump 崩盘冲击波
       if (p._isDumpRing) {
         const alpha = p.lifetime / (p.maxLife || 0.7);
-        ctx.strokeStyle = `rgba(255, 50, 50, ${alpha * 0.7})`;
-        ctx.lineWidth = 6 * alpha;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.strokeStyle = `rgba(255, 100, 50, ${alpha * 0.3})`;
-        ctx.lineWidth = 14 * alpha;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.stroke();
+        const r = p.radius;
+        const maxR = p._maxRadius || 300;
+        const progress = r / maxR; // 0→1 扩张进度
+
+        if (p._isDumpInner) {
+          // 内层亮环：高饱和、粗线条
+          ctx.strokeStyle = `rgba(255, 150, 0, ${alpha * 0.9})`;
+          ctx.lineWidth = 10 * alpha;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+          ctx.stroke();
+          // 内层白热外晕
+          ctx.strokeStyle = `rgba(255, 220, 100, ${alpha * 0.4})`;
+          ctx.lineWidth = 24 * alpha;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+          ctx.stroke();
+        } else {
+          // 外层环：多层
+          // 主环
+          ctx.strokeStyle = `rgba(255, 40, 40, ${alpha * 0.8})`;
+          ctx.lineWidth = 8 * alpha;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+          ctx.stroke();
+          // 外晕
+          ctx.strokeStyle = `rgba(255, 80, 30, ${alpha * 0.35})`;
+          ctx.lineWidth = 20 * alpha;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+          ctx.stroke();
+          // 最外淡晕
+          ctx.strokeStyle = `rgba(255, 100, 50, ${alpha * 0.15})`;
+          ctx.lineWidth = 40 * alpha;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // 中心闪光（扩张早期最亮）
+        if (progress < 0.4) {
+          const flashAlpha = (1 - progress / 0.4) * alpha * 0.6;
+          const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 0.7);
+          gradient.addColorStop(0, `rgba(255, 255, 255, ${flashAlpha})`);
+          gradient.addColorStop(0.3, `rgba(255, 200, 80, ${flashAlpha * 0.7})`);
+          gradient.addColorStop(0.7, `rgba(255, 60, 20, ${flashAlpha * 0.3})`);
+          gradient.addColorStop(1, 'rgba(255, 20, 0, 0)');
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r * 0.7, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
         continue;
       }
 
