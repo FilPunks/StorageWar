@@ -2,6 +2,18 @@
 
 ---
 
+## version 1.4 (2026-06-25)
+
+**中文**
+
+- Pump & Dump Boss 优化：Pump（膨胀）阶段主动追击玩家，速度从 `base * (1 - progress * 0.6)` 调整为 `base * (1.2 - progress * 0.4)`，即开始膨胀时加速 20%、完全膨胀时仍保留 80% 速度（原 40%），追击压迫感明显提升
+
+**English**
+
+- Pump & Dump Boss tweak: during Pump (inflate) phase, now actively chases the player. Speed formula changed from `base * (1 - progress * 0.6)` to `base * (1.2 - progress * 0.4)` — starts 20% faster at pump begin, retains 80% base speed when fully inflated (was 40%), adding noticeable chase pressure
+
+---
+
 ## version 1.3 (2026-06-18)
 
 **中文**

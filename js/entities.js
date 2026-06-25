@@ -550,7 +550,7 @@ export class Enemy {
         const pumpDuration = 6 + Math.random() * 2;
         const progress = Math.min(1, this._phaseTimer / pumpDuration);
         this.radius = this._baseRadius + progress * 55;
-        this.speed = savedSpeed * (1 - progress * 0.6);
+        this.speed = savedSpeed * (1.2 - progress * 0.4);
         this._xpSuction = true;
         this._xpSuctionRadius = 500;
 
