@@ -9,6 +9,8 @@ import {
   playGpuBeam, playGpuVolley,
   playPlayerDamage,
   playPumpGrow, playPumpExplode,
+  playDogeWow, playDogeMuchDamage, playDogeVeryFast, playDogeSuchDanger,
+  playDodge,
 } from './audio.js';
 
 /** 玩家 */
@@ -85,6 +87,15 @@ export class Player {
   /** 受到伤害 */
   takeDamage(amount) {
     if (this.isInvincible) return false;
+
+    // NVMe Bus 闪避：有概率完全回避伤害
+    if (this.dodgeChance > 0 && Math.random() < this.dodgeChance) {
+      // 闪避成功 — 开启短时移动残影
+      this._dodgeTrailTimer = 0.4;
+      playDodge();
+      return false;
+    }
+
     const reduction = this.damageReduction || 0;
     const dmg = Math.floor(amount * (1 - reduction));
     this.hp -= dmg;
@@ -167,6 +178,7 @@ export class Enemy {
     }
     this._firewallSlowed = false; // 每帧重置
     this._inBlackHole = false;    // 每帧重置
+    this._inFirewall = false;     // 每帧重置
 
     // 击退滑动（Format Drive）
     if (this._knockbackVx !== undefined) {
@@ -547,7 +559,8 @@ export class Enemy {
 
       if (this._phase === 'pump') {
         // 膨胀期：变大、追人、远程吸取 XP 币
-        const pumpDuration = 6 + Math.random() * 2;
+        if (!this._pumpDuration) this._pumpDuration = 6 + Math.random() * 2;
+        const pumpDuration = this._pumpDuration;
         const progress = Math.min(1, this._phaseTimer / pumpDuration);
         this._xpSuction = true;
         this._xpSuctionRadius = 500;
@@ -585,9 +598,14 @@ export class Enemy {
           });
         }
 
+        // 最后 3 秒发出 Dump 预警信号
+        this._dumpWarning = (pumpDuration - this._phaseTimer) <= 3 && (pumpDuration - this._phaseTimer) > 0;
+
         if (progress >= 1) {
           this._phase = 'peak';
           this._phaseTimer = 0;
+          this._dumpWarning = false;
+          this._pumpDuration = undefined;
           playPumpGrow();
         }
 
@@ -754,6 +772,7 @@ export class Enemy {
           // wow — 环形狗币弹幕
           this._memeText = 'wow';
           this._memeTextTimer = 0.8;
+          playDogeWow();
           const count = 10;
           for (let i = 0; i < count; i++) {
             const a = (i / count) * Math.PI * 2;
@@ -769,6 +788,7 @@ export class Enemy {
           // much damage — 重型狗币追踪弹
           this._memeText = 'much damage';
           this._memeTextTimer = 0.8;
+          playDogeMuchDamage();
           const a = Math.atan2(playerY - this.y, playerX - this.x);
           projectiles.push({
             x: this.x, y: this.y, vx: Math.cos(a) * 300, vy: Math.sin(a) * 300,
@@ -781,6 +801,7 @@ export class Enemy {
           // very fast — 加速弹跳
           this._memeText = 'very fast';
           this._memeTextTimer = 0.8;
+          playDogeVeryFast();
           const a = Math.atan2(playerY - this.y, playerX - this.x);
           const spd = this.speed * 3;
           this._vx = Math.cos(a) * spd;
@@ -789,6 +810,7 @@ export class Enemy {
           // such danger — 扩散热浪环
           this._memeText = 'such danger';
           this._memeTextTimer = 1.0;
+          playDogeSuchDanger();
           if (!this._heatWaves) this._heatWaves = [];
           this._heatWaves.push({ radius: 15, maxRadius: 400, life: 1.3, maxLife: 1.3, damage: this.damage * 0.7, _color: "#c2a633" });
         }
@@ -809,6 +831,8 @@ export class Enemy {
     this.speed = savedSpeed;
   }
   takeDamage(amount) {
+    // Firewall 增伤：范围内敌人受到伤害 +10%~50%（随技能等级）
+    if (this._inFirewall && this._firewallDmgMult) amount *= this._firewallDmgMult;
     this.hp -= amount;
     return this.hp <= 0;
   }

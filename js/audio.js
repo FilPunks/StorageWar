@@ -496,6 +496,123 @@ export function playPumpExplode() {
   noise.stop(now + 0.4);
 }
 
+// ---- Doge Coin meme 攻击音效 ----
+
+export function playDogeWow() {
+  // wow — 环形弹幕：清脆上升「叮」音 + 高频闪烁感
+  const c = ctx();
+  const now = c.currentTime;
+  const osc = c.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(600, now);
+  osc.frequency.linearRampToValueAtTime(1200, now + 0.08);
+  osc.frequency.linearRampToValueAtTime(800, now + 0.18);
+  const g = gainEnv(c, 0.005, 0.2, 0.15, now);
+  osc.connect(g);
+  g.connect(out());
+  osc.start(now);
+  osc.stop(now + 0.22);
+  // 高频闪烁层
+  const osc2 = c.createOscillator();
+  osc2.type = 'triangle';
+  osc2.frequency.setValueAtTime(1400, now);
+  osc2.frequency.linearRampToValueAtTime(2000, now + 0.06);
+  osc2.frequency.linearRampToValueAtTime(600, now + 0.15);
+  const g2 = gainEnv(c, 0.003, 0.15, 0.06, now);
+  osc2.connect(g2);
+  g2.connect(out());
+  osc2.start(now);
+  osc2.stop(now + 0.18);
+}
+
+export function playDogeMuchDamage() {
+  // much damage — 重型追踪弹：沉闷低频冲击 + 噪声碎裂
+  const c = ctx();
+  const now = c.currentTime;
+  // 基础低频重击
+  const osc = c.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(55, now);
+  osc.frequency.linearRampToValueAtTime(25, now + 0.15);
+  const g = gainEnv(c, 0.005, 0.2, 0.3, now);
+  osc.connect(g);
+  g.connect(out());
+  osc.start(now);
+  osc.stop(now + 0.22);
+  // 噪声冲击层
+  const noise = noiseNode(c, 0.12);
+  const noiseG = gainEnv(c, 0.003, 0.12, 0.18, now);
+  noise.connect(noiseG);
+  noiseG.connect(out());
+  noise.start(now);
+  noise.stop(now + 0.15);
+}
+
+export function playDogeVeryFast() {
+  // very fast — 加速弹跳：快速呼啸声效
+  const c = ctx();
+  const now = c.currentTime;
+  const osc = c.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(200, now);
+  osc.frequency.exponentialRampToValueAtTime(1200, now + 0.15);
+  const g = gainEnv(c, 0.01, 0.18, 0.12, now);
+  osc.connect(g);
+  g.connect(out());
+  osc.start(now);
+  osc.stop(now + 0.2);
+  // 额外风声层（噪声扫频）
+  const noise = noiseNode(c, 0.25);
+  const filter = c.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(400, now);
+  filter.frequency.exponentialRampToValueAtTime(2000, now + 0.15);
+  filter.Q.value = 2;
+  const noiseG = gainEnv(c, 0.005, 0.18, 0.08, now);
+  noise.connect(filter);
+  filter.connect(noiseG);
+  noiseG.connect(out());
+  noise.start(now);
+  noise.stop(now + 0.22);
+}
+
+export function playDogeSuchDanger() {
+  // such danger — 金色热浪环：低频轰鸣扩张
+  const c = ctx();
+  const now = c.currentTime;
+  // 低频嗡鸣
+  const osc = c.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(90, now);
+  osc.frequency.linearRampToValueAtTime(40, now + 0.7);
+  const lfo = c.createOscillator();
+  lfo.type = 'sine';
+  lfo.frequency.value = 8;
+  const lfoGain = c.createGain();
+  lfoGain.gain.value = 15;
+  lfo.connect(lfoGain);
+  lfoGain.connect(osc.frequency);
+  const g = gainEnv(c, 0.05, 0.7, 0.15, now);
+  osc.connect(g);
+  g.connect(out());
+  lfo.start(now);
+  lfo.stop(now + 0.75);
+  osc.start(now);
+  osc.stop(now + 0.75);
+  // 噪声层（热浪质感）
+  const noise = noiseNode(c, 0.4);
+  const filter = c.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(300, now);
+  filter.frequency.linearRampToValueAtTime(60, now + 0.5);
+  const noiseG = gainEnv(c, 0.02, 0.5, 0.1, now);
+  noise.connect(filter);
+  filter.connect(noiseG);
+  noiseG.connect(out());
+  noise.start(now);
+  noise.stop(now + 0.5);
+}
+
 // ---- NFT 大招音效 ----
 
 export function playUltimateCharge() {
@@ -582,4 +699,34 @@ export function playUltimateActivate() {
   osc1.stop(now + 0.75);
   osc2.stop(now + 0.3);
   noise.stop(now + 0.6);
+}
+
+// ---- NVMe Bus 闪避音效 ----
+
+export function playDodge() {
+  // 快速「相位偏移」音效：短促上升 + 高频闪烁
+  const c = ctx();
+  const now = c.currentTime;
+  // 主音：快速上升的 sine
+  const osc = c.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(400, now);
+  osc.frequency.linearRampToValueAtTime(800, now + 0.06);
+  osc.frequency.linearRampToValueAtTime(200, now + 0.14);
+  const g = gainEnv(c, 0.005, 0.14, 0.12, now);
+  osc.connect(g);
+  g.connect(out());
+  osc.start(now);
+  osc.stop(now + 0.16);
+  // 高频闪烁层
+  const osc2 = c.createOscillator();
+  osc2.type = 'triangle';
+  osc2.frequency.setValueAtTime(1200, now);
+  osc2.frequency.linearRampToValueAtTime(2000, now + 0.04);
+  osc2.frequency.linearRampToValueAtTime(300, now + 0.12);
+  const g2 = gainEnv(c, 0.003, 0.12, 0.06, now);
+  osc2.connect(g2);
+  g2.connect(out());
+  osc2.start(now);
+  osc2.stop(now + 0.14);
 }

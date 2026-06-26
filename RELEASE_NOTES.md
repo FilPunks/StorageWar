@@ -2,6 +2,52 @@
 
 ---
 
+## version 1.6 (2026-06-26)
+
+**中文**
+
+**技能大重做：**
+- **NVMe Bus** 重做：从纯移速改为 **闪避 +6.5%/级**（Lv5=32.5%），同时保留 **移速 +3%/级**。闪避触发时完全回避伤害，产生紫色残影拖尾（0.4s 内移动留下光晕虚影）并播放相位偏移音效。Lv5 每 3 秒自动获得 0.15s 无敌帧
+- **Bit Blaster** Lv5 Quantum Stream：360° 齐射从 12 发/1.8s 提升为 **24 发/1.5s**
+- **Ping Pulse Charge** 大重做：脉冲球环绕玩家 → 球数达到技能等级时 **射出一个球** 飞向最近敌人 → **撞敌即爆** 形成麻痹立场（半径 Lv1=50px，每级 +25px）。Lv5 **Latency Storm**：球数翻倍，形成内外双层轨道（内圈转速更快，±20% 速度浮动层次不齐）
+- **Zip Black Hole** 范围每级递增：95→110→125→140→155。Lv5 Tarball Singularity 即死范围改为 **对全部非 Boss 敌人生效**（移除 HDD/RAID 例外）
+- **Firewall** 大幅重做：
+  - 范围每级 **+30px**（100→130→160→190→220，进化 240）
+  - DOT 改为 **百分比伤害**：Boss 1%/级/秒，普通敌人 3%/级/秒
+  - 范围内敌人受到玩家伤害 **+10%/级**（Lv5=+50%）
+  - Lv5 Next-Gen Firewall：非 Boss 敌人进入范围 **减速 33%**
+
+**Boss 优化：**
+- Doge Coin Boss 4 个 meme 技能（wow / much damage / very fast / such danger）新增程序化音效
+- Pump & Dump Boss Pump→Dump 过渡阶段新增红色 3-2-1 倒数预警
+- Doge Coin 漫画气泡箭头修复对齐
+
+**工程：**
+- 图片资源移至 `assets/` 文件夹
+
+**English**
+
+**Major Skill Rework:**
+- **NVMe Bus** rework: changed from pure move speed to **+6.5% dodge/level** (Lv5=32.5%), plus **+3% move speed/level**. Dodge triggers afterimage trail (0.4s of ghostly movement echoes) with phase-shift SFX. Lv5 grants 0.15s invincibility every 3s
+- **Bit Blaster** Lv5 Quantum Stream: 360° volley upgraded from 12 shots/1.8s to **24 shots/1.5s**
+- **Ping Pulse Charge** major rework: orbiting balls → fire one at nearest enemy when count reaches level → **explodes on first hit** creating paralyze field (radius Lv1=50px, +25px/level). Lv5 **Latency Storm**: doubled balls with dual-layer orbits (inner faster, ±20% speed variation)
+- **Zip Black Hole** radius scales per level: 95→110→125→140→155. Lv5 Tarball Singularity now instakills **all non-Boss enemies** (removed HDD/RAID exception)
+- **Firewall** major rework:
+  - Range **+30px/level** (100→130→160→190→220, evolved 240)
+  - DOT changed to **percentage-based**: Boss 1%/level/s, normal enemies 3%/level/s
+  - Enemies inside take **+10% damage/level** from player (Lv5=+50%)
+  - Lv5 Next-Gen Firewall: non-Boss enemies **slowed 33%** inside range
+
+**Boss Improvements:**
+- Doge Coin Boss: 4 meme attacks (wow / much damage / very fast / such danger) now have procedural sound effects
+- Pump & Dump Boss: red 3-2-1 countdown warning for Pump→Dump transition
+- Doge Coin speech bubble arrow alignment fix
+
+**Engineering:**
+- Image assets moved to `assets/` folder
+
+---
+
 ## version 1.5 (2026-06-25)
 
 **中文**

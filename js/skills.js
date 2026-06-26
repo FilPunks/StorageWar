@@ -46,7 +46,7 @@ const ACTIVE_WEAPONS = [
     maxLevel: 5,
     cooldowns: [0.6, 0.5, 0.4, 0.35, 0.25],
     evolveName: 'Quantum Stream',
-    evolveDesc: '保留锁定弹 + 每1.8秒360°全方向齐射12发',
+    evolveDesc: '保留锁定弹 + 每1.5秒360°全方向齐射24发',
   },
   {
     id: 'particleBeam',
@@ -64,11 +64,11 @@ const ACTIVE_WEAPONS = [
     name: 'Ping Pulse Charge',
     emoji: '📡',
     type: 'active',
-    description: '脉冲球环绕玩家，接触伤害',
+    description: '脉冲球环绕，撞敌爆炸形成麻痹立场',
     maxLevel: 5,
-    cooldowns: [0, 0, 0, 0, 0], // 持续存在，无冷却
+    cooldowns: [0, 0, 0, 0, 0],
     evolveName: 'Latency Storm',
-    evolveDesc: '双层环绕 — 内圈4球 + 外圈4球',
+    evolveDesc: '球的数量翻倍',
   },
   {
     id: 'zipBlackHole',
@@ -79,18 +79,18 @@ const ACTIVE_WEAPONS = [
     maxLevel: 5,
     cooldowns: [5, 4.5, 4, 3.5, 4.5],
     evolveName: 'Tarball Singularity',
-    evolveDesc: '结束时范围内非Boss/HDD/RAID敌人被黑洞吞噬即死',
+    evolveDesc: '结束时范围内非Boss敌人被黑洞吞噬即死',
   },
   {
     id: 'firewall',
     name: 'Firewall',
     emoji: '🔥',
     type: 'active',
-    description: '周身火焰光环灼烧 DOT',
+    description: '周身火焰光环，百分比灼烧 DOT',
     maxLevel: 5,
-    cooldowns: [0, 0, 0, 0, 0], // 持续存在
+    cooldowns: [0, 0, 0, 0, 0],
     evolveName: 'Next-Gen Firewall',
-    evolveDesc: '范围翻倍 + 范围内非Boss/HDD/RAID敌人减速30%',
+    evolveDesc: '范围翻倍 + 非Boss敌人减速33%',
   },
   {
     id: 'usbChain',
@@ -155,11 +155,12 @@ const PASSIVE_SKILLS = [
     name: 'NVMe Bus',
     emoji: '💨',
     type: 'passive',
-    description: '移速 +10%',
+    description: '闪避 +6.5%，移速 +3%',
     maxLevel: 5,
-    lv5Bonus: '移动留下加速尾迹',
+    lv5Bonus: '每3秒触发一次无敌帧',
     apply(player, level) {
-      player.speed *= 1.10;
+      player.dodgeChance = level * 0.065;
+      player.speed = PLAYER.speed * (1 + level * 0.03);
       if (level >= 5) player.skillState.nvme5 = true;
     },
   },
@@ -294,6 +295,7 @@ export function initPlayerWeapons(player) {
 
   player.hpRegen = 0;
   player.critChance = 0;
+  player.dodgeChance = 0;
   player.projectileCount = 1;
   player.pierceCount = 0;
   player.projectileSize = 1;
@@ -307,7 +309,10 @@ export function initPlayerWeapons(player) {
   player.speedTrail = [];
   player.fireTrails = [];
   player.blackHoles = [];
+  player.afterimages = [];    // NVMe Bus dodge afterimage
   player._timeStopCooldown = 0;
+  player._nvmeInvincibleCooldown = 0;
+  player._pulseFireReady = 0;
 
   // 初始武器：Sector Sweep Lv1
   const sectorSweep = ACTIVE_WEAPONS.find(w => w.id === 'sectorSweep');
@@ -384,7 +389,7 @@ function fireWeapon(weaponDef, player, entry, enemies, projectiles, particles, e
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
         if (Math.abs(angleDiff) < arcRad / 2) {
-          enemy.hp -= dmg;
+          enemy.takeDamage(dmg);
           if (evolved) {
             // Format Drive 击退（Boss、RAID 免疫）— 平滑滑动
             if (!enemy.isBoss) {
@@ -434,10 +439,10 @@ function fireWeapon(weaponDef, player, entry, enemies, projectiles, particles, e
         const myCD = weaponDef.cooldowns[Math.min(lv - 1, 4)] * cdReduction;
         if (!player._bitBlasterVolleyTimer) player._bitBlasterVolleyTimer = 0;
         player._bitBlasterVolleyTimer += myCD;
-        const volleyInterval = 1.8;
+        const volleyInterval = 1.5;
         if (player._bitBlasterVolleyTimer >= volleyInterval) {
           player._bitBlasterVolleyTimer -= volleyInterval;
-          const volleyCount = 12;
+          const volleyCount = 24;
           const dmg = Math.floor(player.damage * 0.6);
           for (let i = 0; i < volleyCount; i++) {
             const a = (i / volleyCount) * Math.PI * 2;
@@ -472,7 +477,7 @@ function fireWeapon(weaponDef, player, entry, enemies, projectiles, particles, e
         for (const enemy of enemies) {
           const distToBeam = pointToLineDist(enemy.x, enemy.y, player.x, player.y, endX, endY);
           if (distToBeam < enemy.radius + beamWidth) {
-            enemy.hp -= dmg;
+            enemy.takeDamage(dmg);
             spawnBeamParticles(particles, player.x, player.y, enemy.x, enemy.y, '#ff6348', 5);
           }
         }
@@ -487,50 +492,115 @@ function fireWeapon(weaponDef, player, entry, enemies, projectiles, particles, e
     // ============ Ping Pulse Charge ============
     case 'pingPulse': {
       if (!player._pulseBalls) player._pulseBalls = [];
-      const expectedCount = evolved ? 8 : lv;
-      while (player._pulseBalls.length < expectedCount) {
-        player._pulseBalls.push({ angle: Math.random() * Math.PI * 2 });
-      }
-      player._pulseBalls.length = expectedCount;
 
-      const innerCount = evolved ? 4 : 0;
-      const outerDist = evolved ? 140 : 100 + (lv - 1) * 15;
-      const innerDist = 85;
-      const outerSpeed = evolved ? 2.0 : 2.0 + (lv - 1) * 0.2;
-      const innerSpeed = 3.0;
+      const maxBalls = evolved ? lv * 2 : lv;
       const orbRadius = 8;
-      const dmgPerSec = player.damage * (0.6 + (lv - 1) * 0.1);
+      const outerDist = 60 + (lv - 1) * 18;
+      const innerDist = outerDist * 0.55;
+      const outerSpeed = Math.min(2.3, 2.0 + (lv - 1) * 0.15);
+      const innerSpeed = outerSpeed * 1.4;
+      const fireSpeed = Math.min(250, outerSpeed * outerDist * 1.6);
+      // 麻痹立场半径：Lv1=50px，每级+25px
+      const paraRadius = 50 + (lv - 1) * 25;
 
-      // Ping 波纹计时器（每个 charge 球发出 ping）
-      if (!player._pingTimer) player._pingTimer = 0;
-      player._pingTimer += dt;
-      if (player._pingTimer >= 1.0) {
-        player._pingTimer = 0;
-        if (!player._pingRings) player._pingRings = [];
-        for (const ball of player._pulseBalls) {
-          if (!ball.x) continue;
-          player._pingRings.push({ x: ball.x, y: ball.y, radius: 5, maxRadius: 60, life: 0.6, maxLife: 0.6 });
+      while (player._pulseBalls.length < maxBalls) {
+        const idx = player._pulseBalls.length;
+        const isInner = evolved && idx >= lv;
+        const dist = isInner ? innerDist : outerDist;
+        const a = Math.random() * Math.PI * 2;
+        // 5 级进化后每个球速度有 ±20% 浮动，层次不齐
+        const speedMult = evolved ? 0.8 + Math.random() * 0.4 : 1.0;
+        player._pulseBalls.push({
+          angle: a, state: 'orbiting', respawnTimer: 0,
+          x: player.x + Math.cos(a) * dist,
+          y: player.y + Math.sin(a) * dist,
+          isInner, speedMult,
+        });
+      }
+      while (player._pulseBalls.length > maxBalls) player._pulseBalls.pop();
+
+      const orbitingBalls = player._pulseBalls.filter(b => b.state === 'orbiting');
+      const firingBalls = player._pulseBalls.filter(b => b.state === 'firing');
+
+      if (!player._pulseFireReady) player._pulseFireReady = 0;
+      if (orbitingBalls.length === maxBalls) {
+        player._pulseFireReady += dt;
+      } else {
+        player._pulseFireReady = 0;
+      }
+
+      if (orbitingBalls.length === maxBalls && player._pulseFireReady > 0.4 && firingBalls.length === 0 && enemies.length > 0) {
+        const target = findNearestEnemy(player, enemies, 9999);
+        if (target) {
+          player._pulseFireReady = 0;
+          const ball = player._pulseBalls[0];
+          ball.state = 'firing';
+          ball.originX = ball.x;
+          ball.originY = ball.y;
+          const a = Math.atan2(target.y - ball.y, target.x - ball.x);
+          ball.fireVx = Math.cos(a) * fireSpeed;
+          ball.fireVy = Math.sin(a) * fireSpeed;
+          ball.distTraveled = 0;
+          ball._hitEnemies = new Set();
+          ball.radius = orbRadius;
         }
       }
 
-      for (let i = 0; i < player._pulseBalls.length; i++) {
-        const ball = player._pulseBalls[i];
-        const isInner = evolved && i < innerCount;
-        const dist = isInner ? innerDist : outerDist;
-        const speed = isInner ? innerSpeed : outerSpeed;
-        ball.angle += speed * dt;
-        ball.x = player.x + Math.cos(ball.angle) * dist;
-        ball.y = player.y + Math.sin(ball.angle) * dist;
-        ball.radius = orbRadius;
-        ball.isInner = isInner;
+      const dmg = Math.floor(player.damage * 0.4);
+      for (const ball of player._pulseBalls) {
+        if (ball.state === 'orbiting') {
+          const dist = ball.isInner ? innerDist : outerDist;
+          const speed = (ball.isInner ? innerSpeed : outerSpeed) * (ball.speedMult || 1);
+          ball.angle += speed * dt;
+          ball.x = player.x + Math.cos(ball.angle) * dist;
+          ball.y = player.y + Math.sin(ball.angle) * dist;
+          ball.radius = orbRadius;
+        } else if (ball.state === 'firing') {
+          ball.x += ball.fireVx * dt;
+          ball.y += ball.fireVy * dt;
+          ball.distTraveled = distance(ball.originX, ball.originY, ball.x, ball.y);
+          ball.radius = orbRadius;
 
-        for (const enemy of enemies) {
-          const ed = distance(ball.x, ball.y, enemy.x, enemy.y);
-          if (ed < orbRadius + enemy.radius) {
-            enemy.hp -= dmgPerSec * dt;
-            if (!enemy.isBoss) {
-              enemy.paralyzeTimer = (enemy.typeKey === 'raid' || enemy.typeKey === 'hdd') ? 0.3 : 3.0;
+          let hitFirst = false;
+          for (const enemy of enemies) {
+            if (ball._hitEnemies.has(enemy)) continue;
+            if (distance(ball.x, ball.y, enemy.x, enemy.y) < orbRadius + enemy.radius) {
+              ball._hitEnemies.add(enemy);
+              hitFirst = true;
+              break;
             }
+          }
+
+          const travelMax = 600;
+          if (hitFirst || ball.distTraveled >= travelMax) {
+            if (hitFirst) {
+              // 麻痹立场爆炸
+              if (!player._paralyzeExplosions) player._paralyzeExplosions = [];
+              player._paralyzeExplosions.push({
+                x: ball.x, y: ball.y, radius: 5, maxRadius: paraRadius,
+                life: 0.6, maxLife: 0.6,
+              });
+              for (const enemy of enemies) {
+                if (enemy.isBoss) continue;
+                const ed = distance(ball.x, ball.y, enemy.x, enemy.y);
+                if (ed < paraRadius + enemy.radius) {
+                  enemy.takeDamage(dmg);
+                  enemy.paralyzeTimer = 3.0;
+                }
+              }
+            }
+            ball.state = 'respawning';
+            ball.respawnTimer = 0.25 + Math.random() * 0.2;
+          }
+        } else if (ball.state === 'respawning') {
+          ball.respawnTimer -= dt;
+          if (ball.respawnTimer <= 0) {
+            ball.state = 'orbiting';
+            ball.angle = Math.random() * Math.PI * 2;
+            ball.speedMult = evolved ? 0.8 + Math.random() * 0.4 : 1.0;
+            const dist = ball.isInner ? innerDist : outerDist;
+            ball.x = player.x + Math.cos(ball.angle) * dist;
+            ball.y = player.y + Math.sin(ball.angle) * dist;
           }
         }
       }
@@ -546,7 +616,7 @@ function fireWeapon(weaponDef, player, entry, enemies, projectiles, particles, e
       const target = nearby[Math.floor(Math.random() * nearby.length)];
 
       const dur = [3, 3.5, 4, 4.5, 4.5][Math.min(lv - 1, 4)];
-      const radius = evolved ? 150 : [80, 90, 100, 110, 110][Math.min(lv - 1, 4)];
+      const radius = evolved ? 150 : [95, 110, 125, 140, 155][Math.min(lv - 1, 4)];
       const dps = player.damage * (0.5 + (lv - 1) * 0.1);
 
       player.blackHoles.push({
@@ -559,14 +629,18 @@ function fireWeapon(weaponDef, player, entry, enemies, projectiles, particles, e
 
     // ============ Firewall ============
     case 'firewall': {
-      const fwRadius = evolved ? 240 : [100, 120, 140, 160, 160][Math.min(lv - 1, 4)];
-      const fwDps = player.damage * (0.4 + (lv - 1) * 0.1);
+      const fwRadius = evolved ? 240 : 100 + (lv - 1) * 30;
       for (const enemy of enemies) {
         const ed = distance(player.x, player.y, enemy.x, enemy.y);
         if (ed < fwRadius + enemy.radius) {
-          enemy.hp -= fwDps * dt;
-          // 进化：减速非 Boss/HDD/RAID 敌人
-          if (evolved && !enemy.isBoss && enemy.typeKey !== 'hdd' && enemy.typeKey !== 'raid') {
+          // 百分比 DOT：Boss 1%/级/秒，普通敌人 3%/级/秒
+          const pctPerSec = enemy.isBoss ? 0.01 * lv : 0.03 * lv;
+          enemy.hp -= enemy.maxHp * pctPerSec * dt;
+          // 标记在防火墙内（增伤倍率 = 1 + 等级*0.1）
+          enemy._inFirewall = true;
+          enemy._firewallDmgMult = 1.0 + lv * 0.1;
+          // 进化：减速非 Boss 敌人 33%
+          if (evolved && !enemy.isBoss) {
             enemy._firewallSlowed = true;
           }
         }
@@ -597,14 +671,14 @@ function fireWeapon(weaponDef, player, entry, enemies, projectiles, particles, e
       for (let b = 0; b < bounces; b++) {
         if (!current) break;
         hit.add(current);
-        current.hp -= dmg;
+        current.takeDamage(dmg);
         // Thunderbolt Protocol 进化：25px AOE 伤害 + 视觉
         if (evolved) {
           for (const e of enemies) {
             if (e === current || hit.has(e)) continue;
             const aoeDist = distance(current.x, current.y, e.x, e.y);
             if (aoeDist < 25 + e.radius) {
-              e.hp -= dmg;
+              e.takeDamage(dmg);
             }
           }
           // AOE 视觉：金色扩散环
@@ -736,9 +810,66 @@ export function postUpdateWeapons(player, dt) {
     player._sectorSlashes = player._sectorSlashes.filter(s => s.life > 0);
   }
 
+  // 清理麻痹爆炸环
+  if (player._paralyzeExplosions) {
+    for (const ex of player._paralyzeExplosions) ex.life -= dt;
+    player._paralyzeExplosions = player._paralyzeExplosions.filter(ex => ex.life > 0);
+  }
+
   // 更新火痕
   for (const ft of player.fireTrails) ft.life -= dt;
   player.fireTrails = player.fireTrails.filter(ft => ft.life > 0);
+
+  // NVMe Bus Lv5 后像残影
+  if (player.afterimages) {
+    for (const a of player.afterimages) a.life -= dt;
+    player.afterimages = player.afterimages.filter(a => a.life > 0);
+  }
+
+  // NVMe Bus 闪避移动残影：闪避后短时间内移动带出残影
+  if (player._dodgeTrailTimer > 0) {
+    player._dodgeTrailTimer -= dt;
+    if (!player.afterimages) player.afterimages = [];
+    // 每 0.06s 生成一个残影（移动时更密）
+    if (!player._dodgeTrailSpawn) player._dodgeTrailSpawn = 0;
+    player._dodgeTrailSpawn += dt;
+    const spawnInterval = 0.05;
+    while (player._dodgeTrailSpawn >= spawnInterval) {
+      player._dodgeTrailSpawn -= spawnInterval;
+      player.afterimages.push({
+        x: player.x, y: player.y,
+        life: 0.35, maxLife: 0.35,
+        offsetX: (Math.random() - 0.5) * 12,
+        offsetY: (Math.random() - 0.5) * 12,
+      });
+    }
+  } else {
+    player._dodgeTrailSpawn = 0;
+  }
+
+  // NVMe Bus Lv5 无敌帧计时器
+  if (player.skillState.nvme5) {
+    player._nvmeInvincibleCooldown = (player._nvmeInvincibleCooldown || 0) - dt;
+    if (player._nvmeInvincibleCooldown <= 0) {
+      player._nvmeInvincibleCooldown = 3.0;
+      player.invincibleTimer = 0.15; // 短暂无敌帧
+      // 残影效果
+      if (!player.afterimages) player.afterimages = [];
+      for (let i = 0; i < 6; i++) {
+        player.afterimages.push({
+          x: player.x, y: player.y,
+          life: 0.45 + i * 0.08, maxLife: 0.55,
+          offsetX: (Math.random() - 0.5) * 14,
+          offsetY: (Math.random() - 0.5) * 14,
+        });
+      }
+    }
+  }
+
+  // Cloud Backup Lv5：每60秒自动拾取
+  if (player.skillState.cloud5) {
+    player.cloudBackupTimer = (player.cloudBackupTimer || 0) + dt;
+  }
 
   // 更新黑洞
   for (const bh of player.blackHoles) {
@@ -746,7 +877,7 @@ export function postUpdateWeapons(player, dt) {
     for (const enemy of (ctx_enemies || [])) {
       const ed = distance(bh.x, bh.y, enemy.x, enemy.y);
       if (ed < bh.radius + enemy.radius) {
-        enemy.hp -= bh.dps * dt;
+        enemy.takeDamage(bh.dps * dt);
         if (!enemy.isBoss) {
           enemy._inBlackHole = true;
           // Boss 免疫牵引
@@ -764,7 +895,7 @@ export function postUpdateWeapons(player, dt) {
   const succing = player.blackHoles.filter(bh => bh.life <= 0 && bh.succOnDeath);
   for (const bh of succing) {
     for (const enemy of (ctx_enemies || [])) {
-      if (enemy.isBoss || enemy.typeKey === 'hdd' || enemy.typeKey === 'raid') continue;
+      if (enemy.isBoss) continue;
       const ed = distance(bh.x, bh.y, enemy.x, enemy.y);
       if (ed < bh.radius + enemy.radius) {
         enemy.hp = 0;
@@ -778,28 +909,6 @@ export function postUpdateWeapons(player, dt) {
 
   // 清理 Quantum Stream 标记
   // (标记在每帧渲染前由 postUpdate 重置)
-
-  // 更新 NVMe Bus 加速尾迹
-  const inputSpeed = getMovementSpeed(player);
-  if (player.skillState.nvme5 && inputSpeed > 5) {
-    player.speedTrail.push({ x: player.x, y: player.y, life: 1.5, maxLife: 1.5 });
-  }
-  for (const t of player.speedTrail) t.life -= dt;
-  player.speedTrail = player.speedTrail.filter(t => t.life > 0);
-
-  // Cloud Backup Lv5：每60秒自动拾取
-  if (player.skillState.cloud5) {
-    player.cloudBackupTimer = (player.cloudBackupTimer || 0) + dt;
-  }
-}
-
-// 玩家当前移动速度（用于 Firewall 火痕和 NVMe 尾迹判断）
-let _lastPlayerPos = null;
-function getMovementSpeed(player) {
-  if (!_lastPlayerPos) { _lastPlayerPos = { x: player.x, y: player.y }; return 0; }
-  const spd = distance(_lastPlayerPos.x, _lastPlayerPos.y, player.x, player.y);
-  _lastPlayerPos = { x: player.x, y: player.y };
-  return spd;
 }
 
 // 全局敌人引用（黑洞吸引用）

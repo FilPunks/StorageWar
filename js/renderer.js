@@ -9,7 +9,7 @@ const PASSIVE_COLOR = '#55efc4';
 // ========== 玩家精灵图加载 ==========
 
 let playerSprite = new Image();
-playerSprite.src = './205.png';
+playerSprite.src = './assets/205.png';
 let spriteLoaded = false;
 playerSprite.onload = () => { spriteLoaded = true; };
 
@@ -18,7 +18,7 @@ let dogeSprite = null;
 let dogeSpriteLoaded = false;
 (function() {
   const img = new Image();
-  img.src = './doge.jpg';
+  img.src = './assets/doge.jpg';
   img.onload = () => {
     const c = document.createElement('canvas');
     c.width = img.width;
@@ -47,7 +47,7 @@ export function setPlayerSprite(img) {
 
 export function resetPlayerSprite() {
   playerSprite = new Image();
-  playerSprite.src = './205.png';
+  playerSprite.src = './assets/205.png';
   spriteLoaded = false;
   playerSprite.onload = () => { spriteLoaded = true; };
 }
@@ -55,7 +55,7 @@ export function resetPlayerSprite() {
 // ========== Dogecoin 弹幕精灵图 ==========
 
 const dogeCoinProjSource = new Image();
-dogeCoinProjSource.src = './dogecoin.svg';
+dogeCoinProjSource.src = './assets/dogecoin.svg';
 let dogeCoinProjSprite = null;
 let dogeCoinProjLoaded = false;
 dogeCoinProjSource.onload = () => {
@@ -73,7 +73,7 @@ dogeCoinProjSource.onload = () => {
 // ========== XP Coin 精灵图加载（Filecoin 标志） ==========
 
 const coinSpriteSource = new Image();
-coinSpriteSource.src = './Filecoin.svg.png';
+coinSpriteSource.src = './assets/Filecoin.svg.png';
 let coinSprite = null;
 let coinSpriteLoaded = false;
 coinSpriteSource.onload = () => {
@@ -1238,6 +1238,20 @@ function drawEnemy(ctx, enemy) {
         ctx.fillText(count.toString(), (Math.random()-0.5)*shake, -radius - 10);
       }
     }
+
+    // Pump→Dump 倒数预警（最后 3 秒显示红色数字）
+    if (enemy._dumpWarning && enemy._phase === 'pump') {
+      const remaining = enemy._pumpDuration - enemy._phaseTimer;
+      const count = Math.ceil(remaining);
+      if (count >= 1 && count <= 3) {
+        const shake = (remaining - Math.floor(remaining)) < 0.15 ? 3 : 0;
+        ctx.fillStyle = '#ff3333';
+        ctx.font = 'bold 22px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(count.toString(), (Math.random()-0.5)*shake, -radius - 10);
+      }
+    }
   }
 
   ctx.restore();
@@ -1823,7 +1837,7 @@ export function drawPlayerEffects(ctx, player) {
   // --- 脉冲球（Ping Pulse Charge） ---
   if (player._pulseBalls) {
     for (const ball of player._pulseBalls) {
-      if (!ball.x) continue;
+      if (!ball.x || ball.state === 'respawning') continue;
       const r = ball.radius || 7;
       // 光晕
       const gradient = ctx.createRadialGradient(ball.x, ball.y, r * 0.3, ball.x, ball.y, r * 2);
@@ -1846,10 +1860,30 @@ export function drawPlayerEffects(ctx, player) {
     }
   }
 
+  // --- 麻痹爆炸环（Latency Storm） ---
+  if (player._paralyzeExplosions) {
+    for (const ex of player._paralyzeExplosions) {
+      const alpha = ex.life / ex.maxLife;
+      const progress = 1 - alpha;
+      const r = 5 + progress * (ex.maxRadius - 5);
+      ctx.strokeStyle = `rgba(162, 155, 254, ${alpha * 0.7})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(ex.x, ex.y, r, 0, Math.PI * 2);
+      ctx.stroke();
+      // 内圈
+      ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.4})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(ex.x, ex.y, r * 0.7, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
   // --- Firewall 光环 ---
   const fwEntry = player.activeWeapons?.get('firewall');
   if (fwEntry && fwEntry.level > 0) {
-    const fwRadius = fwEntry.evolved ? 240 : [100, 120, 140, 160, 160][Math.min(fwEntry.level - 1, 4)];
+    const fwRadius = fwEntry.evolved ? 240 : 100 + (Math.min(fwEntry.level, 5) - 1) * 30;
     const alpha = 0.18 + 0.05 * Math.sin(Date.now() / 300);
     const gradient = ctx.createRadialGradient(player.x, player.y, fwRadius * 0.4, player.x, player.y, fwRadius);
     gradient.addColorStop(0, 'rgba(255, 71, 87, 0)');
@@ -1918,14 +1952,36 @@ export function drawPlayerEffects(ctx, player) {
     player._bhExplosions = [];
   }
 
-  // --- NVMe 加速尾迹 ---
-  if (player.speedTrail) {
-    for (const t of player.speedTrail) {
-      const alpha = t.life / t.maxLife * 0.3;
-      ctx.fillStyle = `rgba(85, 239, 196, ${alpha})`;
+  // --- NVMe 闪避残影 ---
+  if (player.afterimages) {
+    for (const a of player.afterimages) {
+      const alpha = a.life / a.maxLife * 0.65;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      const ax = a.x + (a.offsetX || 0);
+      const ay = a.y + (a.offsetY || 0);
+      ctx.translate(ax, ay);
+      // 外圈光晕
+      const gradient = ctx.createRadialGradient(0, 0, player.radius * 0.2, 0, 0, player.radius * 1.4);
+      gradient.addColorStop(0, 'rgba(162, 155, 254, 0.6)');
+      gradient.addColorStop(0.6, 'rgba(108, 92, 231, 0.3)');
+      gradient.addColorStop(1, 'rgba(108, 92, 231, 0)');
+      ctx.fillStyle = gradient;
       ctx.beginPath();
-      ctx.arc(t.x, t.y, 8 * (t.life / t.maxLife), 0, Math.PI * 2);
+      ctx.arc(0, 0, player.radius * 1.4, 0, Math.PI * 2);
       ctx.fill();
+      // 主体
+      ctx.fillStyle = '#6c5ce7';
+      ctx.beginPath();
+      ctx.arc(0, 0, player.radius * (0.8 + a.life / a.maxLife * 0.2), 0, Math.PI * 2);
+      ctx.fill();
+      // 边缘亮环
+      ctx.strokeStyle = '#a29bfe';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
     }
   }
 
@@ -1973,23 +2029,6 @@ export function drawPlayerEffects(ctx, player) {
   }
 
   // --- Ping 波纹（Ping Pulse Charge，从每个球发出） ---
-  if (player._pingRings) {
-    for (const ring of player._pingRings) {
-      const alpha = ring.life / ring.maxLife;
-      const r = ring.radius + (1 - alpha) * ring.maxRadius;
-      ctx.strokeStyle = `rgba(116, 185, 255, ${alpha * 0.5})`;
-      ctx.lineWidth = 3 * alpha;
-      ctx.beginPath();
-      ctx.arc(ring.x, ring.y, r, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.strokeStyle = `rgba(162, 155, 254, ${alpha * 0.3})`;
-      ctx.lineWidth = 6 * alpha;
-      ctx.beginPath();
-      ctx.arc(ring.x, ring.y, r + 8, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-  }
-
   // --- Absolute Zero 时间停止触发波纹 ---
   if (player._timeStopWaves) {
     for (const wave of player._timeStopWaves) {
@@ -2169,7 +2208,7 @@ export function drawBossEffects(ctx, enemies) {
       ctx.fill();
       ctx.stroke();
       // 尾巴指向boss
-      const tailX = enemy.x, tailY = enemy.y - enemy.radius - 4;
+      const tailX = tx, tailY = enemy.y - enemy.radius - 4;
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.moveTo(tailX - 7, ty + th/2 - 1);

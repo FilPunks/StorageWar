@@ -86,7 +86,7 @@ const dict = {
   'skill.bitBlaster.name':        { zh: '比特冲击',           en: 'Bit Blaster' },
   'skill.bitBlaster.desc':        { zh: '锁定全屏敌人发射像素弹', en: 'Lock-on pixel bullets at all enemies' },
   'skill.bitBlaster.evolveName':  { zh: '量子流',             en: 'Quantum Stream' },
-  'skill.bitBlaster.evolveDesc':  { zh: '保留锁定弹 + 每1.8秒360°全方向齐射12发', en: 'Keep lock-on + 360° 12-shot volley every 1.8s' },
+  'skill.bitBlaster.evolveDesc':  { zh: '保留锁定弹 + 每1.5秒360°全方向齐射24发', en: 'Keep lock-on + 360° 24-shot volley every 1.5s' },
 
   'skill.particleBeam.name':        { zh: '404 粒子光束',       en: '404 Particle Beam' },
   'skill.particleBeam.desc':        { zh: '随机方向粗激光束，直线穿透', en: 'Random-direction thick laser, linear pierce' },
@@ -94,19 +94,19 @@ const dict = {
   'skill.particleBeam.evolveDesc':  { zh: '双束激光 + 偶尔十字交叉四束', en: 'Dual lasers + occasional 4-beam cross' },
 
   'skill.pingPulse.name':        { zh: 'Ping 脉冲充能',       en: 'Ping Pulse Charge' },
-  'skill.pingPulse.desc':        { zh: '脉冲球环绕玩家，接触伤害', en: 'Orbiting pulse balls, contact damage' },
+  'skill.pingPulse.desc':        { zh: '脉冲球环绕，撞敌爆炸形成麻痹立场', en: 'Orbiting balls, explodes on hit creating paralyze field' },
   'skill.pingPulse.evolveName':  { zh: '延迟风暴',            en: 'Latency Storm' },
-  'skill.pingPulse.evolveDesc':  { zh: '双层环绕 — 内圈4球 + 外圈4球', en: 'Dual-layer orbit: 4 inner + 4 outer' },
+  'skill.pingPulse.evolveDesc':  { zh: '球的数量翻倍',         en: 'Double the number of balls' },
 
   'skill.zipBlackHole.name':        { zh: 'Zip 黑洞',           en: 'Zip Black Hole' },
   'skill.zipBlackHole.desc':        { zh: '抛出迷你黑洞，吸引敌人并造成DOT', en: 'Throws mini black hole, pulls enemies + DOT' },
   'skill.zipBlackHole.evolveName':  { zh: 'Tarball 奇点',       en: 'Tarball Singularity' },
-  'skill.zipBlackHole.evolveDesc':  { zh: '结束时范围内非Boss/HDD/RAID敌人被黑洞吞噬即死', en: 'Instakills non-Boss/HDD/RAID enemies in range on expiry' },
+  'skill.zipBlackHole.evolveDesc':  { zh: '结束时范围内非Boss敌人被黑洞吞噬即死', en: 'Instakills non-Boss enemies in range on expiry' },
 
   'skill.firewall.name':        { zh: '防火墙',              en: 'Firewall' },
-  'skill.firewall.desc':        { zh: '周身火焰光环灼烧 DOT', en: 'Surrounding fire aura, burn DOT' },
+  'skill.firewall.desc':        { zh: '周身火焰光环，百分比灼烧 DOT', en: 'Fire aura, percentage-based burn DOT' },
   'skill.firewall.evolveName':  { zh: '下一代防火墙',         en: 'Next-Gen Firewall' },
-  'skill.firewall.evolveDesc':  { zh: '范围翻倍 + 范围内非Boss/HDD/RAID敌人减速30%', en: 'Double range + 30% slow to non-Boss/HDD/RAID enemies' },
+  'skill.firewall.evolveDesc':  { zh: '范围翻倍 + 非Boss敌人减速33%', en: 'Double range + 33% slow to non-Boss enemies' },
 
   'skill.usbChain.name':        { zh: 'USB 闪电链',           en: 'USB Chain Lightning' },
   'skill.usbChain.desc':        { zh: '从天而降闪电链，弹跳于敌人之间', en: 'Lightning strikes from above, bounces between enemies' },
@@ -128,8 +128,8 @@ const dict = {
   'skill.eccMemory.lv5Bonus': { zh: '弹幕15%暴击率(×2伤害)',     en: '15% crit chance (×2 dmg) for projectiles' },
 
   'skill.nvmeBus.name':     { zh: 'NVMe 总线',                   en: 'NVMe Bus' },
-  'skill.nvmeBus.desc':     { zh: '移速 +10%',                   en: 'Move speed +10%' },
-  'skill.nvmeBus.lv5Bonus': { zh: '移动留下加速尾迹',             en: 'Leaves speed trail while moving' },
+  'skill.nvmeBus.desc':     { zh: '闪避 +6.5%，移速 +3%',         en: 'Dodge +6.5%, Move Speed +3%' },
+  'skill.nvmeBus.lv5Bonus': { zh: '每3秒触发一次无敌帧',             en: 'Grants invincibility every 3s' },
 
   'skill.machineLearning.name':     { zh: '机器学习',             en: 'Machine Learning' },
   'skill.machineLearning.desc':     { zh: '经验获取 +20%',        en: 'XP gain +20%' },

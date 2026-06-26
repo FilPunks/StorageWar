@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Storage War — A FilPunks Survival Game</title>
-  <link rel="icon" type="image/png" href="205.png">
+  <link rel="icon" type="image/png" href="assets/205.png">
   <script>
     // 将 favicon 裁剪为圆形
     const img = new Image();
@@ -20,7 +20,7 @@
       const link = document.querySelector('link[rel="icon"]');
       link.href = c.toDataURL('image/png');
     };
-    img.src = '205.png';
+    img.src = 'assets/205.png';
   </script>
   <style>
     * {
@@ -475,7 +475,7 @@
   <div id="game-container">
     <canvas id="game-canvas"></canvas>
     <div id="mobile-notice">
-      <img class="notice-icon" src="205.png" alt="logo" />
+      <img class="notice-icon" src="assets/205.png" alt="logo" />
       <div class="notice-title">STORAGE WAR</div>
       <div class="notice-subtitle">A FilPunks Survival Game</div>
       <div class="notice-message"></div>
@@ -517,7 +517,7 @@
     <div id="donate-area">
       <span id="donate-text"></span><button id="copy-btn">⎘</button>
     </div>
-    <div id="version-label">version 1.5</div>
+    <div id="version-label">version 1.6</div>
     <div id="toast"></div>
     <div id="menu-mint-overlay"></div>
     <div id="upgrade-overlay">

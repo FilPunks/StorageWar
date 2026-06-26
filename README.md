@@ -2,7 +2,7 @@
 
 A retro-style Vampire Survivors-like browser game built with vanilla JavaScript and HTML5 Canvas. Fight waves of computer-hardware-themed enemies, collect XP, level up, and survive as long as you can.
 
-**Current version: 1.5**
+**Current version: 1.6**
 
 ## Gameplay
 
@@ -10,8 +10,8 @@ Survive endless waves of computer-themed enemies. Move with WASD or arrow keys, 
 
 ## Features
 
-- **8 Active Weapons** — arc slashes, homing projectiles, laser beams, orbiting pulse balls, black holes, fire auras, chain lightning, and cooling fan blades
-- **7 Passive Skills** — boost HP regen, attack power, move speed, XP gain, pickup range, cooldown reduction, and damage reduction
+- **8 Active Weapons** — arc slashes, homing projectiles, laser beams, orbiting pulse balls that explode on hit, black holes, fire auras (percentage-based DOT), chain lightning, and cooling fan blades
+- **7 Passive Skills** — boost HP regen, attack power, dodge + move speed, XP gain, pickup range, cooldown reduction, and damage reduction
 - **Skill Evolution** — each weapon evolves into a powerful new form at Level 5
 - **10 Enemy Types** — Floppy Disk, SSD, Hard Disk, USB Stick, RAID Array, CD/DVD, Child Process, plus 6 unique Bosses
 - **6 Boss Fights** — see table below for spawn times and behaviors
@@ -56,17 +56,17 @@ Survive endless waves of computer-themed enemies. Move with WASD or arrow keys, 
 | Weapon | Evolution (Lv5) |
 | --- | --- |
 | Sector Sweep | Format Drive — 360° slash + knockback |
-| Bit Blaster | Quantum Stream — lock-on + 360° volleys |
+| Bit Blaster | Quantum Stream — lock-on + 360° 24-shot volleys every 1.5s |
 | 404 Particle Beam | 502 Gateway Blast — dual/cross lasers |
-| Ping Pulse Charge | Latency Storm — dual-layer orbiting balls |
-| Zip Black Hole | Tarball Singularity — instakill on expiry |
-| Firewall | Next-Gen Firewall — double range + slow |
+| Ping Pulse Charge | Latency Storm — balls explode on hit forming paralyze fields; double balls on dual orbits |
+| Zip Black Hole | Tarball Singularity — instakill all non-Boss enemies on expiry |
+| Firewall | Next-Gen Firewall — double range + 33% slow; percentage-based DOT; +10% dmg/level to enemies inside |
 | USB Chain Lightning | Thunderbolt Protocol — 8 bounces + AOE |
 | Cooling Fan Blades | Absolute Zero — periodic time freeze |
 
 ### Passive Skills
 
-RAID Redundancy, ECC Memory, NVMe Bus, Machine Learning, Cloud Backup, Overclock, Firewall Rules — each has 5 levels with a powerful Lv5 bonus.
+RAID Redundancy, ECC Memory, NVMe Bus (dodge + move speed), Machine Learning, Cloud Backup, Overclock, Firewall Rules — each has 5 levels with a powerful Lv5 bonus.
 
 ## Run Locally
 
