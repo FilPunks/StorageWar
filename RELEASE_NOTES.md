@@ -2,6 +2,20 @@
 
 ---
 
+## version 1.7 (2026-06-30)
+
+**中文**
+
+**Boss 平衡调整：**
+- Pump & Dump Boss Pump 阶段追击速度降低约 30-40%：速度公式从 `base × (5.0 - progress × 1.0)` 调整为 `base × (3.5 - progress × 0.5)`，有效速度 175→140 px/s 降至 122→105 px/s，给玩家更多躲避空间
+
+**English**
+
+**Boss Balance:**
+- Pump & Dump Boss chase speed during Pump phase reduced ~30-40%: speed formula changed from `base × (5.0 - progress × 1.0)` to `base × (3.5 - progress × 0.5)`, effective speed 175→140 px/s lowered to 122→105 px/s, giving players more room to dodge
+
+---
+
 ## version 1.6 (2026-06-26)
 
 **中文**

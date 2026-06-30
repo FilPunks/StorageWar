@@ -576,7 +576,7 @@ export class Enemy {
         }
 
         // 速度：膨胀期高速追击（基础速度 35 vs 玩家 220，需大倍率）
-        this.speed = savedSpeed * (5.0 - progress * 1.0);
+        this.speed = savedSpeed * (3.5 - progress * 0.5);
 
         const dir = normalize(playerX - this.x, playerY - this.y);
         this.x += dir.x * this.speed * dt;
